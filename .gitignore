@@ -1,0 +1,16 @@
+# .NET
+bin/
+obj/
+*.db
+
+# Vue
+node_modules/
+dist/
+
+# Others
+.env
+
+# Visual Studio
+.vs/
+*.user
+*.suo
