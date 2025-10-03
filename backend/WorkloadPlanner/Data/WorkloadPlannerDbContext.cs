@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using WorkloadPlanner.Models;
 
 namespace WorkloadPlanner.Data
 {
-    public class WorkloadPlannerDbContext : IdentityDbContext
+    public class WorkloadPlannerDbContext : IdentityDbContext<ApplicationUser>
     {
         public WorkloadPlannerDbContext() { }
 

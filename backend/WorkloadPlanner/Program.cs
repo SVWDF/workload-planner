@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using WorkloadPlanner.Data;
+using WorkloadPlanner.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,7 @@ builder.Services.AddDbContext<WorkloadPlannerDbContext>(options =>
     new MySqlServerVersion(new Version(8, 0, 34))));
 
 //Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<WorkloadPlannerDbContext>()
     .AddDefaultTokenProviders();
 
