@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using WorkloadPlanner.DTOs;
-using WorkloadPlanner.Models;
+using WorkloadPlanner.Exceptions;
 using WorkloadPlanner.Services.Auth;
-using WorkloadPlanner.Services.Jwt;
 
 namespace WorkloadPlanner.Controllers
 {
@@ -21,25 +19,39 @@ namespace WorkloadPlanner.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO registerUserDTO)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+            {
+                var validationErrors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
 
-            var result = await _authService.RegisterAsync(registerUserDTO);
+                return BadRequest(new { errors = validationErrors });
+            }
 
-            if (result == null) return BadRequest(new { message = "User with this email already exists" });
-
-            return Ok(result);
+            try
+            {
+                string token = await _authService.RegisterAsync(registerUserDTO);
+                return Ok(new { token });
+            }
+            catch (AuthException ex)
+            {
+                return BadRequest(new { errors = ex.Errors });
+            }
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var result = await _authService.LoginAsync(loginDTO);
-
-            if (result == null) return Unauthorized(new { message = "Invalid email or password" });
-
-            return Ok(result);
+            try
+            {
+                string token = await _authService.LoginAsync(loginDTO);
+                return Ok(new { token });
+            }
+            catch (AuthException ex)
+            {
+                return Unauthorized(new { errors = ex.Errors });
+            }
         }
     }
 }

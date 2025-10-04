@@ -4,7 +4,7 @@ namespace WorkloadPlanner.Services.Auth
 {
     public interface IAuthService
     {
-        Task<AuthResponseDTO?> LoginAsync(LoginDTO loginDTO);
-        Task<AuthResponseDTO?> RegisterAsync(RegisterDTO registerDTO);
+        Task<string> RegisterAsync(RegisterDTO registerDTO);
+        Task<string> LoginAsync(LoginDTO loginDTO);
     }
 }

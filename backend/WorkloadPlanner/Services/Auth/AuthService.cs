@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using WorkloadPlanner.DTOs;
+using WorkloadPlanner.Exceptions;
 using WorkloadPlanner.Models;
 using WorkloadPlanner.Services.Jwt;
 
@@ -18,13 +19,13 @@ namespace WorkloadPlanner.Services.Auth
             _tokenService = tokenService;
         }
 
-        public async Task<AuthResponseDTO?> RegisterAsync(RegisterDTO registerDTO)
+        public async Task<string> RegisterAsync(RegisterDTO registerDTO)
         {
             var existingUser = await _userManager.FindByEmailAsync(registerDTO.Email);
 
             if (existingUser != null)
             {
-                return null;
+                throw new AuthException("User with this email already exists");
             }
 
             var user = new ApplicationUser
@@ -36,45 +37,27 @@ namespace WorkloadPlanner.Services.Auth
             };
 
             var result = await _userManager.CreateAsync(user, registerDTO.Password);
-
             if (!result.Succeeded)
-                return null;
+                throw new AuthException(result.Errors.Select(e => e.Description));
 
-            return GenerateToken(user);
+            return _tokenService.GenerateToken(user);
         }
 
-        public async Task<AuthResponseDTO?> LoginAsync(LoginDTO loginDTO)
+        public async Task<string> LoginAsync(LoginDTO loginDTO)
         {
             var user = await _userManager.FindByEmailAsync(loginDTO.Email);
-
             if (user == null)
             {
-                return null;
+                throw new AuthException("Invalid username or password.");
             }
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDTO.Password, false);
-
             if (!result.Succeeded)
             {
-                return null;
+                throw new AuthException("Invalid username or password.");
             }
 
-            return GenerateToken(user);
-        }
-        
-        private AuthResponseDTO GenerateToken(ApplicationUser user)
-        {
-            var token = _tokenService.GenerateToken(user);
-            var expiryMinutes = int.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_HOURS") ?? "3");
-
-            return new AuthResponseDTO
-            {
-                Token = token,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                ExpiresAt = DateTime.UtcNow.AddHours(expiryMinutes)
-            };
+            return _tokenService.GenerateToken(user);
         }
     }
 }
