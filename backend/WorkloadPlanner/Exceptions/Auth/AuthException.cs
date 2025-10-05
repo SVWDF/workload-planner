@@ -1,5 +1,4 @@
-﻿
-namespace WorkloadPlanner.Exceptions
+﻿namespace WorkloadPlanner.Exceptions.Auth
 {
     public class AuthException : Exception
     {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WorkloadPlanner.DTOs;
-using WorkloadPlanner.Exceptions;
+using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Services.Auth;
 
 namespace WorkloadPlanner.Controllers
@@ -38,6 +38,10 @@ namespace WorkloadPlanner.Controllers
             {
                 return BadRequest(new { errors = ex.Errors });
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { errors = new[] { ex.Message } });
+            }
         }
 
         [HttpPost("login")]
@@ -51,6 +55,10 @@ namespace WorkloadPlanner.Controllers
             catch (AuthException ex)
             {
                 return Unauthorized(new { errors = ex.Errors });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { errors = new[] { ex.Message } });
             }
         }
     }

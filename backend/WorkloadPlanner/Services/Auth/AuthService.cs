@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using WorkloadPlanner.DTOs;
 using WorkloadPlanner.Exceptions;
+using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Models;
 using WorkloadPlanner.Services.Jwt;
 
@@ -25,7 +26,7 @@ namespace WorkloadPlanner.Services.Auth
 
             if (existingUser != null)
             {
-                throw new AuthException("User with this email already exists");
+                throw new UserAlreadyExistsException(registerDTO.Email);
             }
 
             var user = new ApplicationUser
@@ -38,7 +39,7 @@ namespace WorkloadPlanner.Services.Auth
 
             var result = await _userManager.CreateAsync(user, registerDTO.Password);
             if (!result.Succeeded)
-                throw new AuthException(result.Errors.Select(e => e.Description));
+                throw new PasswordPolicyException(result.Errors.Select(e => e.Description));
 
             return _tokenService.GenerateToken(user);
         }
@@ -48,13 +49,13 @@ namespace WorkloadPlanner.Services.Auth
             var user = await _userManager.FindByEmailAsync(loginDTO.Email);
             if (user == null)
             {
-                throw new AuthException("Invalid username or password.");
+                throw new InvalidCredentialException();
             }
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDTO.Password, false);
             if (!result.Succeeded)
             {
-                throw new AuthException("Invalid username or password.");
+                throw new InvalidCredentialException();
             }
 
             return _tokenService.GenerateToken(user);
