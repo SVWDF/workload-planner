@@ -1,26 +1,33 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from "../store/auth"
+import { useAuth } from "../composables/auth"
 import LoginPage from '../pages/LoginPage.vue'
 import RegisterPage from '../pages/RegisterPage.vue'
 import AppPage from '../pages/AppPage.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     { path: '/', redirect: "login" },
-    { path: "/login", component: LoginPage },
-    { path: "/register", component: RegisterPage },
-    { path: "/app", component: AppPage, meta: { requireAuth: true } }
+    { path: "/login", component: LoginPage, name: "Login", meta: { requiresAuth: false } },
+    { path: "/register", component: RegisterPage, name: "Register", meta: { requiresAuth: false } },
+    { path: "/app", component: AppPage, name: "App", meta: { requiresAuth: true } }
   ],
-})
+});
 
-router.beforeEach((to, _, next) => {
-  const authStore = useAuthStore();
-  if (to.meta.requiresAuth && !authStore.loggedIn) {
-    next("/login");
-  } else {
-    next();
-  }
+router.beforeEach(async (to, _, next) => {
+    const { loggedIn, fetchCurrentUser } = useAuth();
+
+    await fetchCurrentUser();
+
+    if (to.meta.requiresAuth && !loggedIn.value) {
+        next("/login");
+    } 
+    else if (!to.meta.requiresAuth && loggedIn.value) {
+        next("/app");
+    }
+    else {
+        next();
+    }
 });
 
 export default router

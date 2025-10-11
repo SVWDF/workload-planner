@@ -6,8 +6,8 @@
       <input v-model="password" type="password" placeholder="Password" required />
       <button type="submit">Login</button>
     </form>
-    <div v-if="authStore.errors.length">
-      <p v-for="(e, i) in authStore.errors" :key="i" style="color:red">{{ e }}</p>
+    <div v-if="errors.length">
+      <p v-for="(e, i) in errors" :key="i" style="color:red">{{ e }}</p>
     </div>
     <p>Don't have an account? <router-link to="/register">Register</router-link></p>
   </div>
@@ -15,17 +15,18 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { useAuthStore } from "../store/auth";
 import { useRouter } from "vue-router";
+import { useAuth } from "../composables/auth";
 
-const authStore = useAuthStore();
+const { login, loggedIn, errors } = useAuth();
 const router = useRouter();
+
 const email = ref("");
 const password = ref("");
 
 const handleLogin = async () => {
-    await authStore.login({ email: email.value, password: password.value });
-    if (authStore.loggedIn) router.push("/app")
+  await login({ email: email.value, password: password.value });
+  if (loggedIn.value) router.push("/app");
 };
 </script>
 

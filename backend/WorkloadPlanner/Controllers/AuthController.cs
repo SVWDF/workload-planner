@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WorkloadPlanner.DTOs;
 using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Services.Auth;
@@ -31,8 +32,8 @@ namespace WorkloadPlanner.Controllers
 
             try
             {
-                string token = await _authService.RegisterAsync(registerUserDTO);
-                return Ok(new { token });
+                await _authService.RegisterAsync(registerUserDTO);
+                return Ok(new { message = "Registed and logged in" });
             }
             catch (AuthException ex)
             {
@@ -47,10 +48,20 @@ namespace WorkloadPlanner.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDTO)
         {
+            if (!ModelState.IsValid)
+            {
+                var validationErrors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new { errors = validationErrors });
+            }
+
             try
             {
-                string token = await _authService.LoginAsync(loginDTO);
-                return Ok(new { token });
+                await _authService.LoginAsync(loginDTO);
+                return Ok(new { message = "Logged in" });
             }
             catch (AuthException ex)
             {
@@ -60,6 +71,21 @@ namespace WorkloadPlanner.Controllers
             {
                 return StatusCode(500, new { errors = new[] { ex.Message } });
             }
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _authService.LogoutAsync();
+            return Ok(new { message = "Logged out" });
+        }
+
+        [Authorize]
+        [HttpGet("user")]
+        public IActionResult GetCurrentUser()
+        {
+            return Ok();
         }
     }
 }

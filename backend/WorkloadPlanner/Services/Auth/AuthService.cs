@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using WorkloadPlanner.DTOs;
-using WorkloadPlanner.Exceptions;
 using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Models;
-using WorkloadPlanner.Services.Jwt;
 
 namespace WorkloadPlanner.Services.Auth
 {
@@ -11,23 +9,17 @@ namespace WorkloadPlanner.Services.Auth
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ITokenService _tokenService;
 
-        public AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ITokenService tokenService)
+        public AuthService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
-            _tokenService = tokenService;
         }
 
-        public async Task<string> RegisterAsync(RegisterDTO registerDTO)
+        public async Task RegisterAsync(RegisterDTO registerDTO)
         {
             var existingUser = await _userManager.FindByEmailAsync(registerDTO.Email);
-
-            if (existingUser != null)
-            {
-                throw new UserAlreadyExistsException(registerDTO.Email);
-            }
+            if (existingUser != null) throw new UserAlreadyExistsException(registerDTO.Email);
 
             var user = new ApplicationUser
             {
@@ -38,27 +30,23 @@ namespace WorkloadPlanner.Services.Auth
             };
 
             var result = await _userManager.CreateAsync(user, registerDTO.Password);
-            if (!result.Succeeded)
-                throw new PasswordPolicyException(result.Errors.Select(e => e.Description));
+            if (!result.Succeeded) throw new PasswordPolicyException(result.Errors.Select(e => e.Description));
 
-            return _tokenService.GenerateToken(user);
+            await _signInManager.SignInAsync(user, isPersistent: false);
         }
 
-        public async Task<string> LoginAsync(LoginDTO loginDTO)
+        public async Task LoginAsync(LoginDTO loginDTO)
         {
             var user = await _userManager.FindByEmailAsync(loginDTO.Email);
-            if (user == null)
-            {
-                throw new InvalidCredentialException();
-            }
+            if (user == null) throw new InvalidCredentialException();
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDTO.Password, false);
-            if (!result.Succeeded)
-            {
-                throw new InvalidCredentialException();
-            }
+            var result = await _signInManager.PasswordSignInAsync(user, loginDTO.Password, isPersistent: false, lockoutOnFailure: false);
+            if (!result.Succeeded) throw new InvalidCredentialException();
+        }
 
-            return _tokenService.GenerateToken(user);
+        public async Task LogoutAsync()
+        {
+            await _signInManager.SignOutAsync();
         }
     }
 }

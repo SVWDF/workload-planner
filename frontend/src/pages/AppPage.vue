@@ -1,16 +1,19 @@
 <template>
   <div class="app-container">
     <h2>Welcome to the App Page 🎉</h2>
-    <button @click="logout">Logout</button>
+    <button @click="handleLogout">Logout</button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from "../store/auth";
+import { useAuth } from "../composables/auth";
+import { useRouter } from "vue-router";
 
-const authStore = useAuthStore();
+const { logout } = useAuth();
+const router = useRouter();
 
-const logout = () => {
-  authStore.logout();
+const handleLogout = async () => {
+  await logout();
+  router.push("/login");
 };
 </script>

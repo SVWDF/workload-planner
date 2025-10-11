@@ -1,31 +1,14 @@
 using DotNetEnv;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using WorkloadPlanner.Data;
 using WorkloadPlanner.Models;
 using WorkloadPlanner.Services.Auth;
-using WorkloadPlanner.Services.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //Load .env file
 Env.Load();
-
-//Configuration ASP.NET Core Identity 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-{
-    //User settings
-    options.User.RequireUniqueEmail = true;
-})
-    .AddEntityFrameworkStores<WorkloadPlannerDbContext>()
-    .AddDefaultTokenProviders();
-
-//Register custom services
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ITokenService, TokenService>();
 
 //Configure MySQL database
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? throw new InvalidOperationException("DB_CONNECTION_STRING not found");
@@ -33,45 +16,51 @@ var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"
 builder.Services.AddDbContext<WorkloadPlannerDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-//Configure JWT Authentication
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? throw new InvalidOperationException("JWT_SECRET not found");
-var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "WorkloadPlannerApp";
-var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "WorkloadPlannerAppUsers";
-var jwtExpirationHours = int.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_HOURS") ?? "3");
-
-builder.Services.AddAuthentication(options =>
+//Configuration ASP.NET Core Identity 
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.User.RequireUniqueEmail = true;
 })
-    .AddJwtBearer(options =>
+    .AddEntityFrameworkStores<WorkloadPlannerDbContext>()
+    .AddDefaultTokenProviders();
+
+//Add cookie authentication
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/auth/login";
+    options.LogoutPath = "/auth/logout";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    options.ExpireTimeSpan = TimeSpan.FromHours(3);
+    options.SlidingExpiration = true;
+
+    options.Events.OnRedirectToLogin = context =>
     {
-        options.SaveToken = true;
-        options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters = new TokenValidationParameters
+        if (context.Request.Path.StartsWithSegments("/api"))
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ClockSkew = TimeSpan.Zero
-        };
-    });
+            context.Response.StatusCode = 401; //API requests return 401 instead of redirect
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+});
 
 //Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
-        .AllowAnyMethod()
-        .AllowAnyHeader();
+        policy.WithOrigins("http://localhost:5173")
+        .AllowCredentials()
+        .AllowAnyHeader()
+        .AllowAnyMethod();
     });
 });
+
+//Register custom services
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 //Add services to the container.
 
@@ -95,8 +84,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
