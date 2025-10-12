@@ -4,41 +4,41 @@ import { type LoginRequest, type RegisterRequest } from "../types/auth";
 
 const state = reactive({
   loggedIn: false,
-  errors: [] as string[]
 });
 
-async function login(data: LoginRequest) {
+const login = async (data: LoginRequest) => {
   try {
     await http.post("/auth/login", data);
     state.loggedIn = true;
-    state.errors = [];
+    return { success: true, errors: [] as string[] };
   } 
   catch (err: any) {
-    state.errors = err.customErrors || ["Login failed"];
+    const errors = err.customErrors || ["Login failed"];
+    return { success: false, errors };
   }
 }
 
-async function register(data: RegisterRequest) {
+const register = async (data: RegisterRequest) => {
   try {
     await http.post("/auth/register", data);
     state.loggedIn = true;
-    state.errors = [];
+    return { success: true, errors: [] as string[] };
   } 
   catch (err: any) {
-    state.errors = err.customErrors || ["Registration failed"];
+    const errors = err.customErrors || ["Registration failed"];
+    return { success: false, errors };
   }
 }
 
-async function logout() {
+const logout = async () => {
   await http.post("/auth/logout");
   state.loggedIn = false;
-  state.errors = [];
 }
 
-async function fetchCurrentUser() {
+const fetchCurrentUser = async () => {
   try {
-    await http.get("/auth/user");
-    state.loggedIn = true;
+    const response = await http.get("/auth/user");
+    state.loggedIn = response.data.authenticated;
   }
   catch (err: any) {
     state.loggedIn = false;
@@ -48,10 +48,9 @@ async function fetchCurrentUser() {
 export function useAuth() {
   return {
     loggedIn: computed(() => state.loggedIn),
-    errors: computed(() => state.errors),
     login,
     register,
     logout,
-    fetchCurrentUser
+    fetchCurrentUser,
   }
 };

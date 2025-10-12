@@ -81,11 +81,10 @@ namespace WorkloadPlanner.Controllers
             return Ok(new { message = "Logged out" });
         }
 
-        [Authorize]
         [HttpGet("user")]
         public IActionResult GetCurrentUser()
         {
-            return Ok();
+            return Ok(new { authenticated = User.Identity?.IsAuthenticated ?? false});
         }
     }
 }

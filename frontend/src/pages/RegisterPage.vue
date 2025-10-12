@@ -1,27 +1,63 @@
 <template>
-  <div class="auth-container">
-    <h2>Register</h2>
-    <form @submit.prevent="handleRegister">
-      <input v-model="firstName" placeholder="First name" required />
-      <input v-model="lastName" placeholder="Last name" required />
-      <input v-model="username" placeholder="Username" required />
-      <input v-model="email" type="email" placeholder="Email" required />
-      <input v-model="password" type="password" placeholder="Password" required />
-      <button type="submit">Register</button>
+  <AuthCard
+  title="Workload Planner X"
+  subtitle="Register here to start working in your new workspace">
+    <form @submit.prevent="handleRegister" class="register-form">
+      <input
+        v-model="firstName"
+        type="text"
+        placeholder="First name"
+        required
+        class="auth-input"
+      />
+      <input 
+        v-model="lastName"
+        type="text"
+        placeholder="Last name"
+        required
+        class="auth-input"
+      />
+      <input 
+        v-model="username"
+        type="text"
+        placeholder="Username"
+        required
+        class="auth-input"
+      />
+      <input
+        v-model="email"
+        type="email"
+        placeholder="Email"
+        required
+        class="auth-input"
+      />
+      <input
+        v-model="password"
+        type="password"
+        placeholder="Password"
+        required
+        class="auth-input"
+      />
+      <button type="submit" class="auth-button">Register</button>
     </form>
-    <div v-if="errors.length">
-      <p v-for="(e, i) in errors" :key="i" style="color:red">{{ e }}</p>
+    <div v-if="localErrors.length" class="error-box">
+      <p v-for="(e, i) in localErrors" :key="i">{{ e }}</p>
     </div>
-    <p>Already have an account? <router-link to="/login">Login</router-link></p>
-  </div>
+
+    <template #footer class="login-text">
+      Already have an account?
+      <router-link to="/login" class="link">Login</router-link>
+    </template>
+  </AuthCard>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue";
 import { useAuth } from "../composables/auth";
 import { useRouter } from "vue-router";
+import AuthCard from "../components/AuthCard.vue";
 
-const {register, loggedIn, errors } = useAuth();
+const { register } = useAuth();
 const router = useRouter();
 
 const firstName = ref("");
@@ -29,16 +65,24 @@ const lastName = ref("");
 const username = ref("");
 const email = ref("");
 const password = ref("");
+const localErrors = ref<string[]>([]);
 
 const handleRegister = async () => {
-    await register({
-        firstName: firstName.value,
-        lastName: lastName.value,
-        username: username.value,
-        email: email.value,
-        password: password.value,
-    });
-    if (loggedIn) router.push("/app");
-  
+  const result = await register({
+      firstName: firstName.value,
+      lastName: lastName.value,
+      username: username.value,
+      email: email.value,
+      password: password.value,
+  });
+  if (result.success) {
+    localErrors.value = result.errors;
+    router.push("/app");
+  } 
+  else {
+    localErrors.value = result.errors;
+  }
 };
 </script>
+
+<style src="../assets/auth.css"></style>

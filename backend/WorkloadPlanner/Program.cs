@@ -34,17 +34,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.None;
     options.ExpireTimeSpan = TimeSpan.FromHours(3);
     options.SlidingExpiration = true;
-
-    options.Events.OnRedirectToLogin = context =>
-    {
-        if (context.Request.Path.StartsWithSegments("/api"))
-        {
-            context.Response.StatusCode = 401; //API requests return 401 instead of redirect
-            return Task.CompletedTask;
-        }
-        context.Response.Redirect(context.RedirectUri);
-        return Task.CompletedTask;
-    };
 });
 
 //Configure CORS
