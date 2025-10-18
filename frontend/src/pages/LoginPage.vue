@@ -1,7 +1,8 @@
 <template>
   <AuthCard 
   title="Workload Planner X"
-  subtitle="Log in to access your workspace">
+  subtitle="Log in to access your workspace"
+  class="login-card">
     <form @submit.prevent="handleLogin" class="login-form">
         <input
           v-model="email"

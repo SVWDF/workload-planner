@@ -1,7 +1,8 @@
 <template>
   <AuthCard
   title="Workload Planner X"
-  subtitle="Register here to start working in your new workspace">
+  subtitle="Register here to start working in your new workspace"
+  class="register-card">
     <form @submit.prevent="handleRegister" class="register-form">
       <input
         v-model="firstName"
