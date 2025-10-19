@@ -12,8 +12,8 @@ using WorkloadPlanner.Data;
 namespace WorkloadPlanner.Migrations
 {
     [DbContext(typeof(WorkloadPlannerDbContext))]
-    [Migration("20251003104638_DatabaseInitilization")]
-    partial class DatabaseInitilization
+    [Migration("20251019111605_DbInit")]
+    partial class DbInit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -168,9 +168,6 @@ namespace WorkloadPlanner.Migrations
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("longtext");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)

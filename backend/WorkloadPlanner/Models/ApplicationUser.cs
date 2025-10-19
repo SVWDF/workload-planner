@@ -12,6 +12,5 @@ namespace WorkloadPlanner.Models
         [Required]
         [MaxLength(100)]
         public string LastName { get; set; }
-        public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     }
 }
