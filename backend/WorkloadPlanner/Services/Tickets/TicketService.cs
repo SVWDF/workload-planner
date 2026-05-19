@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using WorkloadPlanner.DTOs.Tickets;
 using WorkloadPlanner.Enums;
@@ -10,11 +11,13 @@ namespace WorkloadPlanner.Services.Tickets
     public class TicketService : ITicketService
     {
         private readonly ITicketRepository _repository;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHubContext<ScrumboardHub> _hubContext;
 
-        public TicketService(ITicketRepository repository, IHubContext<ScrumboardHub> hubContext)
+        public TicketService(ITicketRepository repository, UserManager<ApplicationUser> userManager, IHubContext<ScrumboardHub> hubContext)
         {
             _repository = repository;
+            _userManager = userManager;
             _hubContext = hubContext;
         }
 
@@ -106,7 +109,7 @@ namespace WorkloadPlanner.Services.Tickets
             ticket.AssignedUserId = userId;
             await _repository.SaveChangesAsync();
 
-            ticket = await _repository.GetTicketAsync(id);
+            var user = await _userManager.FindByIdAsync(userId);
             var dto = new TicketDTO
             {
                 Id = ticket!.Id,
@@ -114,7 +117,7 @@ namespace WorkloadPlanner.Services.Tickets
                 Description = ticket.Description,
                 Priority = ticket.Priority,
                 Status = ticket.Status,
-                AssignedUser = ticket.AssignedUser?.UserName
+                AssignedUser = user?.UserName
             };
 
             await _hubContext
@@ -136,7 +139,7 @@ namespace WorkloadPlanner.Services.Tickets
             ticket.Status = dto.Status;
             await _repository.SaveChangesAsync();
 
-            return new TicketDTO
+            var ticketDTO = new TicketDTO
             {
                 Id = ticket.Id,
                 Title = ticket.Title,
@@ -145,6 +148,13 @@ namespace WorkloadPlanner.Services.Tickets
                 Status = ticket.Status,
                 AssignedUser = ticket.AssignedUser?.UserName
             };
+
+            await _hubContext
+                .Clients
+                .Group($"scrumboard-{ticket.ScrumBoardId}")
+                .SendAsync("TicketStatusChanged", ticketDTO);
+
+            return ticketDTO;
         }
     }
 }

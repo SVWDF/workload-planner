@@ -232,7 +232,16 @@ onMounted(async () => {
 
         if (index !== -1) tickets.value[index] = updatedTicket;
         if (selectedTicket.value?.id === updatedTicket.id) selectedTicket.value = updatedTicket;
-      }) 
+      });
+      
+      signalRConnection.on("TicketStatusChanged", (updatedTicket: Ticket) => {
+        const index = tickets.value
+          .findIndex(t => t.id === updatedTicket.id);
+
+        if (index !== -1) tickets.value[index] = updatedTicket;
+        if (selectedTicket.value?.id === updatedTicket.id) selectedTicket.value = updatedTicket;
+        selectedStatus.value = updatedTicket.status;
+      });
     }
     catch (err: unknown) {
       if (axios.isAxiosError(err)) {
