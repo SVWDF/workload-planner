@@ -1,4 +1,4 @@
-﻿namespace WorkloadPlanner.DTOs
+﻿namespace WorkloadPlanner.DTOs.Auth
 {
     public class LoginDTO
     {

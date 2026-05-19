@@ -11,11 +11,12 @@
 import { useAuth } from "../composables/auth";
 import { useRouter } from "vue-router";
 
-const { logout } = useAuth();
+const { logout, clearAuth } = useAuth();
 const router = useRouter();
 
 const handleLogout = async () => {
   await logout();
+  clearAuth();
   router.push("/login");
 };
 </script>
@@ -39,7 +40,7 @@ button {
   background-color: #4f8cff;
   color: #fff;
   border: none;
-  padding: 0.7rem 1.75rem;
+  padding: 0.6rem 1.4rem;
   font-size: 1rem;
   border-radius: 8px;
   cursor: pointer;

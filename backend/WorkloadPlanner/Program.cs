@@ -2,8 +2,14 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WorkloadPlanner.Data;
+using WorkloadPlanner.Hubs;
 using WorkloadPlanner.Models;
+using WorkloadPlanner.Repositories.ScrumBoards;
+using WorkloadPlanner.Repositories.Tickets;
 using WorkloadPlanner.Services.Auth;
+using WorkloadPlanner.Services.ScrumBoards;
+using WorkloadPlanner.Services.Tickets;
+using WorkloadPlanner.Services.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,9 +37,21 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = "/auth/logout";
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-    options.ExpireTimeSpan = TimeSpan.FromHours(3);
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromHours(1);
     options.SlidingExpiration = true;
+
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+
+    // options.Events.OnRedirectToAccessDenied = context =>
+    // {
+    //     context.Response.StatusCode = StatusCodes.Status403Forbidden;
+    //     return Task.CompletedTask;
+    // };
 });
 
 //Configure CORS
@@ -48,9 +66,16 @@ builder.Services.AddCors(options =>
     });
 });
 
+//Configure SignalR
+builder.Services.AddSignalR();
+
 //Register custom services
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IScrumBoardService, ScrumBoardService>();
+builder.Services.AddScoped<IScrumBoardRepository, ScrumBoardRepository>();
+builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 //Add services to the container.
 
 builder.Services.AddControllers()
@@ -79,6 +104,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<ScrumboardHub>("/scrumboardHub");
 
 //Add user roles
 using (var scope = app.Services.CreateScope())

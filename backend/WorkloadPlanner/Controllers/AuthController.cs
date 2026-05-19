@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WorkloadPlanner.DTOs;
+using WorkloadPlanner.DTOs.Auth;
 using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Services.Auth;
 

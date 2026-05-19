@@ -8,14 +8,36 @@ const http = axios.create({
 
 http.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.data?.errors) {
-      error.customErrors = error.response.data.errors;
+  (error: unknown) => {
+    if (axios.isAxiosError(error)) {
+      const url = error.config?.url ?? "";
+      const isAuthRequest = url.includes("/auth/login");
+
+      if (error.response?.status === 401 && !isAuthRequest) {
+        window.location.href = "/login";
+      }
+
+      const customError = error as typeof error & {
+        customErrors?: string[];
+      };
+
+      if (error.response?.data?.errors) {
+        customError.customErrors =
+          error.response.data.errors;
+      }
+      else {
+        customError.customErrors = [
+          error.message ||
+          "An unknown error occurred"
+        ];
+      }
+
+      return Promise.reject(customError);
     }
-    else {
-      error.customErrors = [error.message || "An unknow error occured"];
-    }
-    return Promise.reject(error);
+
+    return Promise.reject({
+      customErrors: ["Unexpected error"]
+    });
   }
 );
 

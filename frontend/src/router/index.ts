@@ -1,29 +1,36 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuth } from "../composables/auth"
-import LoginPage from '../pages/LoginPage.vue'
-import RegisterPage from '../pages/RegisterPage.vue'
-import AppPage from '../pages/AppPage.vue'
+import { useAuth } from "@/composables/auth"
+import LoginPage from '@/pages/auth/LoginPage.vue'
+import RegisterPage from '@/pages/auth/RegisterPage.vue'
+import DashboardPage from '@/pages/scrumboards/DashboardPage.vue'
+import CreateBoardPage from '@/pages/scrumboards/CreateBoardPage.vue'
+import BoardPage from '@/pages/scrumboards/BoardPage.vue'
+import AppLayout from '@/layouts/AppLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: "login" },
     { path: "/login", component: LoginPage, name: "Login", meta: { requiresAuth: false } },
     { path: "/register", component: RegisterPage, name: "Register", meta: { requiresAuth: false } },
-    { path: "/app", component: AppPage, name: "App", meta: { requiresAuth: true } }
+    { path: "/", component: AppLayout, meta: { requiresAuth: true },
+    children: [
+        { path: "dashboard",  component: DashboardPage, name: "Dashboard" },
+        { path: "boards/create", component: CreateBoardPage, name: "Create board" },
+        { path: "boards/:slug", component: BoardPage, name: "Board" }
+    ] }
   ],
 });
 
 router.beforeEach(async (to, _, next) => {
-    const { loggedIn, fetchCurrentUser } = useAuth();
+    const { loggedIn, initialized, fetchCurrentUser } = useAuth();
 
-    await fetchCurrentUser();
+    if (!initialized.value) await fetchCurrentUser();
 
     if (to.meta.requiresAuth && !loggedIn.value) {
         next("/login");
     } 
     else if (!to.meta.requiresAuth && loggedIn.value) {
-        next("/app");
+        next("/dashboard");
     }
     else {
         next();

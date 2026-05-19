@@ -5,35 +5,35 @@
   class="register-card">
     <form @submit.prevent="handleRegister" class="register-form">
       <input
-        v-model="firstName"
+        v-model="form.firstName"
         type="text"
         placeholder="First name"
         required
         class="auth-input"
       />
       <input 
-        v-model="lastName"
+        v-model="form.lastName"
         type="text"
         placeholder="Last name"
         required
         class="auth-input"
       />
       <input 
-        v-model="username"
+        v-model="form.username"
         type="text"
         placeholder="Username"
         required
         class="auth-input"
       />
       <input
-        v-model="email"
+        v-model="form.email"
         type="email"
         placeholder="Email"
         required
         class="auth-input"
       />
       <input
-        v-model="password"
+        v-model="form.password"
         type="password"
         placeholder="Password"
         required
@@ -45,40 +45,44 @@
       <p v-for="(e, i) in localErrors" :key="i">{{ e }}</p>
     </div>
 
-    <template #footer class="login-text">
-      Already have an account?
-      <router-link to="/login" class="link">Login</router-link>
+    <template #footer>
+      <div class="register-footer">
+        <span>Already have an account?</span>
+        <router-link to="/login" class="link">Login</router-link>
+      </div>
     </template>
   </AuthCard>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useAuth } from "../composables/auth";
+import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
-import AuthCard from "../components/AuthCard.vue";
+import { useAuth } from "@/composables/auth";
+import AuthCard from "@/components/AuthCard.vue";
 
 const { register } = useAuth();
 const router = useRouter();
 
-const firstName = ref("");
-const lastName = ref("");
-const username = ref("");
-const email = ref("");
-const password = ref("");
+const form = reactive({
+  firstName: "",
+  lastName: "",
+  username: "",
+  email: "",
+  password: ""
+});
 const localErrors = ref<string[]>([]);
 
 const handleRegister = async () => {
   const result = await register({
-      firstName: firstName.value,
-      lastName: lastName.value,
-      username: username.value,
-      email: email.value,
-      password: password.value,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      username: form.username,
+      email: form.email,
+      password: form.password,
   });
   if (result.success) {
-    localErrors.value = result.errors;
-    router.push("/app");
+    localErrors.value = [];
+    router.push("/dashboard");
   } 
   else {
     localErrors.value = result.errors;
@@ -86,4 +90,4 @@ const handleRegister = async () => {
 };
 </script>
 
-<style src="../assets/auth.css"></style>
+<style src="@/assets/auth.css"></style>

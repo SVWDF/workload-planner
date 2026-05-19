@@ -4,6 +4,7 @@ import { type LoginRequest, type RegisterRequest } from "../types/auth";
 
 const state = reactive({
   loggedIn: false,
+  initialized: false
 });
 
 const login = async (data: LoginRequest) => {
@@ -12,8 +13,8 @@ const login = async (data: LoginRequest) => {
     state.loggedIn = true;
     return { success: true, errors: [] as string[] };
   } 
-  catch (err: any) {
-    const errors = err.customErrors || ["Login failed"];
+  catch (err: unknown) {
+    const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Login failed"];
     return { success: false, errors };
   }
 }
@@ -24,8 +25,8 @@ const register = async (data: RegisterRequest) => {
     state.loggedIn = true;
     return { success: true, errors: [] as string[] };
   } 
-  catch (err: any) {
-    const errors = err.customErrors || ["Registration failed"];
+  catch (err: unknown) {
+    const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Registration failed"];
     return { success: false, errors };
   }
 }
@@ -40,17 +41,26 @@ const fetchCurrentUser = async () => {
     const response = await http.get("/auth/user");
     state.loggedIn = response.data.authenticated;
   }
-  catch (err: any) {
-    state.loggedIn = false;
+  catch {
+    clearAuth();
+  }
+  finally {
+    state.initialized = true;
   }
 }
+
+const clearAuth = () => {
+  state.loggedIn = false;
+};
 
 export function useAuth() {
   return {
     loggedIn: computed(() => state.loggedIn),
+    initialized: computed(() => state.initialized),
     login,
     register,
     logout,
     fetchCurrentUser,
+    clearAuth
   }
 };

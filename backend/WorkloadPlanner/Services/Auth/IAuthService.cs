@@ -1,4 +1,4 @@
-﻿using WorkloadPlanner.DTOs;
+﻿using WorkloadPlanner.DTOs.Auth;
 
 namespace WorkloadPlanner.Services.Auth
 {

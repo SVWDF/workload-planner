@@ -79,11 +79,9 @@
   margin-bottom: 6px;
 }
 
-.register-text,
-.login-text {
-  margin-top: 1.5rem;
-  color: #aaaaaa;
-  font-size: 0.9rem;
+.register-footer,
+.login-footer {
+  margin-top: 18px;
 }
 
 .link {

@@ -37,17 +37,11 @@ defineProps<{
 
 .auth-card {
     background: #2d2d2d;
-    padding: 2rem 4rem;
+    padding: 2rem;
     border-radius: 16px;
     box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
     color: #f0f0f0;
     text-align: center;
-}
-
-@media (max-width: 768px) {
-    .auth-card {
-        padding: 2rem;
-    }
 }
 
 .title {

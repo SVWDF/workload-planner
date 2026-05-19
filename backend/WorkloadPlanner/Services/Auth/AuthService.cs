@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using WorkloadPlanner.DTOs;
+using WorkloadPlanner.DTOs.Auth;
 using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Models;
 
