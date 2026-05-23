@@ -29,14 +29,14 @@
       <div class="user-results">
         <div v-for="user in users" :key="user.id" class="user-result">
           <span>{{ user.username }}</span>
-          <button @click="addUser(user)">Add</button>
+          <button type="button" @click="addUser(user)">Add</button>
         </div>
       </div>
 
       <div class="selected-users">
         <div v-for="user in selectedUsers" :key="user.id" class="selected-user">
           {{ user.username }}
-          <button @click="removeUser(user.id)">
+          <button type="button" @click="removeUser(user.id)">
             X
           </button>
         </div>
@@ -59,6 +59,7 @@ import { useScrumBoards } from '../../composables/scrumboard';
 import { useUsers } from "../../composables/user";
 import { type User } from "../../types/user";
 import { createSlug } from "../../helpers/slug";
+import { BOARD_COLORS } from "@/constants/boardColors";
 
 const name = ref("");
 const colors = ref<string[]>([]);
@@ -68,14 +69,13 @@ const users = ref<User[]>([]);
 const selectedUsers = ref<User[]>([]);
 const localErrors = ref<string[]>([]);
 const router = useRouter();
-const { createScrumBoard, getBoardColors } = useScrumBoards();
+const { createScrumBoard } = useScrumBoards();
 const { searchUsers } = useUsers();
+const boardColors = BOARD_COLORS;
 let timeout: number;
 
 const loadColors = async () => {
-    const response = await getBoardColors();
-
-    colors.value = response.data;
+    colors.value = boardColors;
 
     selectedColor.value =
         colors.value[
@@ -95,7 +95,9 @@ const handleSearchUsers = async () => {
   
     try {
       const response = await searchUsers(search.value);
-      users.value = response.data;
+      users.value = response.data
+        .filter((user: User) => !selectedUsers.value
+          .some((selected: User) => selected.id === user.id));
     }
     catch {
       users.value = [];
@@ -107,11 +109,9 @@ const addUser = (user: User) => {
   const exists = selectedUsers.value.some(
     (u: User) => u.id === user.id
   );
-
   if (exists) return;
 
   selectedUsers.value.push(user);
-
   search.value = "";
   users.value = [];
 };
@@ -121,24 +121,25 @@ const removeUser = (id: string) => {
     selectedUsers.value.filter(
       (u: User) => u.id !== id
     );
+  handleSearchUsers();
 };
 
 const createBoard = async () => {
+  localErrors.value = [];
+
   const response = await createScrumBoard({
     name: name.value,
     color: selectedColor.value,
     memberIds: selectedUsers.value.map((u: User) => u.id)
   });
 
-  if (!response.success) {
+  if (!response.success || !response.data) {
     localErrors.value = response.errors;
     return;
   }
 
-  localErrors.value = [];
-
   const slug = createSlug(response.data.name);
-  router.push(`/boards/${slug}-${response.data.id}`);
+  router.push({ name: "Board", params: { slug: `${slug}-${response.data.id}`}});
 };
 
 onMounted(loadColors);

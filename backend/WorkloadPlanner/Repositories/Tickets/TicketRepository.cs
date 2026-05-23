@@ -16,6 +16,7 @@ namespace WorkloadPlanner.Repositories.Tickets
         public async Task<IEnumerable<Ticket>> GetScrumboardTicketsAsync(int scrumboardId)
         {
             return await _context.Tickets
+                .AsNoTracking()
                 .Include(t => t.AssignedUser)
                 .Where(t => t.ScrumBoardId == scrumboardId)
                 .ToListAsync();

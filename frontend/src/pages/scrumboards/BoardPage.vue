@@ -3,47 +3,30 @@
     <div class="board-header">
       <div>
         <h1>{{ board.name }}</h1>
-        <p>{{ board.members }} members • {{ board.tickets }} tickets</p>
+        <p>{{ board.members }} members • {{ tickets.length }} tickets</p>
       </div>
       <button v-if="board.isManager" @click="showCreateTicket = true" class="create-ticket-btn">+ New Ticket</button>
     </div>
 
     <div class="board-columns">
 
-      <div class="board-column">
-        <div class="column-header">
-          <h3>To Do</h3>
-          <span>{{ todoTickets.length }}</span>
-        </div>
-        <div v-for="ticket in todoTickets" :key="ticket.id" @click="openTicket(ticket)" class="ticket-card">
-          <h4>{{ ticket.title }}</h4>
-          <p>{{ ticket.description }}</p>
-        </div>
-      </div>
+      <BoardColumn
+        title="To Do"
+        :tickets="todoTickets"
+        @open-ticket="openTicket"
+      />
 
-      <div class="board-column">
-        <div class="column-header">
-          <h3>In Progress</h3>
-          <span>{{ inProgressTickets.length }}</span>
-        </div>
+      <BoardColumn
+        title="In Progress"
+        :tickets="inProgressTickets"
+        @open-ticket="openTicket"
+      />
 
-        <div v-for="ticket in inProgressTickets" :key="ticket.id" @click="openTicket(ticket)" class="ticket-card">
-          <h4>{{ ticket.title }}</h4>
-          <p>{{ ticket.description }}</p>
-        </div>
-      </div>
-
-      <div class="board-column">
-        <div class="column-header">
-          <h3>Done</h3>
-          <span>{{ doneTickets.length }}</span>
-        </div>
-
-        <div v-for="ticket in doneTickets" :key="ticket.id" @click="openTicket(ticket)" class="ticket-card">
-          <h4>{{ ticket.title }}</h4>
-          <p>{{ ticket.description }}</p>
-        </div>
-      </div>
+      <BoardColumn
+        title="Done"
+        :tickets="doneTickets"
+        @open-ticket="openTicket"
+      />
     </div>
   </div>
 
@@ -51,60 +34,38 @@
     Loading...
   </div>
 
-  <div v-if="showCreateTicket" class="modal-overlay">
-    <div class="ticket-modal">
-      <h2>Create Ticket</h2>
-      <input v-model="title" placeholder="Title"/>
-      <textarea v-model="description" placeholder="Description"/>
-      <div v-if="localErrors.length" class="error-box">
-        <p v-for="(e, i) in localErrors" :key="i">{{ e }}</p>
-      </div>
+  <CreateTicketModal 
+    :open="showCreateTicket"
+    :errors="localErrors"
+    @close="closeCreateModal"
+    @create="handleCreateTicket"
+  />
 
-      <div class="modal-actions">
-        <button @click="showCreateTicket = false">Cancel</button>
-        <button @click="handleCreateTicket">Create</button>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="showTicketModal" class="modal-overlay">
-    <div class="ticket-modal">
-      <h2>Ticket Details</h2>
-      <input v-model="editTitle" :disabled="!board?.isManager" />
-      <textarea v-model="editDescription" :disabled="!board?.isManager"></textarea>
-      <p>Assigned: {{ selectedTicket?.assignedUser ?? "Nobody" }}</p>
-      <button @click="handleAssignSelfToTicket">Assign to me</button>
-      <select v-model="selectedStatus" @change="handleStatusChange">
-        <option :value="0">
-          To Do
-        </option>
-        <option :value="1">
-          In Progress
-        </option>
-        <option :value="2">
-          Done
-        </option>
-      </select>
-      <div class="modal-actions">
-        <button @click="showTicketModal = false">Close</button>
-        <template v-if="board?.isManager">
-          <button @click="handleUpdateTicket">Save</button>
-          <button @click="handleDeleteTicket">Delete</button>
-        </template>
-      </div>
-    </div>
-  </div>
+  <TicketDetailsModal 
+    :open="showTicketModal"
+    :ticket="selectedTicket"
+    :is-manager="board?.isManager ?? false"
+    :errors="localErrors"
+    @close="closeTicketModal"
+    @save="handleUpdateTicket"
+    @delete="handleDeleteTicket"
+    @assign="handleAssignSelfToTicket"
+    @status-change="handleStatusChange"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useScrumBoards } from '@/composables/scrumboard';
-import type { ScrumBoard } from "@/types/scrumboard";
 import axios from "axios";
+import { useScrumBoards } from '@/composables/scrumboard';
 import { useTickets } from '@/composables/ticket';
-import type { Ticket } from "@/types/ticket";
 import signalRConnection from "@/services/signalr";
+import type { ScrumBoard } from "@/types/scrumboard";
+import { TicketPriority, TicketStatus, type Ticket } from "@/types/ticket";
+import BoardColumn from "@/components/BoardColumn.vue";
+import CreateTicketModal from "@/components/CreateTicketModal.vue";
+import TicketDetailsModal from "@/components/TicketDetailsModal.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -114,55 +75,58 @@ const slug = route.params.slug as string;
 const boardId = Number(slug.split("-").pop());
 const board = ref<ScrumBoard | null>(null);
 const tickets = ref<Ticket[]>([]);
-const todoTickets = computed(() => tickets.value.filter(t => t.status === 0));
-const inProgressTickets = computed(() => tickets.value.filter(t => t.status === 1));
-const doneTickets = computed(() => tickets.value.filter(t => t.status === 2));
+const todoTickets = computed(() => tickets.value.filter(t => t.status === TicketStatus.Todo));
+const inProgressTickets = computed(() => tickets.value.filter(t => t.status === TicketStatus.InProgress));
+const doneTickets = computed(() => tickets.value.filter(t => t.status === TicketStatus.Done));
 const showCreateTicket = ref(false);
-const title = ref("");
-const description = ref("");
 const localErrors = ref<string[]>([]);
 const selectedTicket = ref<Ticket | null>(null);
 const showTicketModal = ref(false);
-const editTitle = ref("");
-const editDescription = ref("");
-const selectedStatus = ref(0);
 
 const openTicket = (ticket: Ticket) => {
   selectedTicket.value = ticket;
-  editTitle.value = ticket.title;
-  editDescription.value = ticket.description;
-  selectedStatus.value = ticket.status;
   showTicketModal.value = true;
 };
 
-const handleCreateTicket = async () => {
-  const result = await createTicket({title: title.value, description: description.value, scrumboardId: boardId, priority: 1});
+const closeCreateModal = () => {
+  localErrors.value = [];
+  showCreateTicket.value = false;
+};
+
+const closeTicketModal = () => {
+  localErrors.value = [];
+  selectedTicket.value = null;
+  showTicketModal.value = false;
+};
+
+const updateTicketInList = (ticket: Ticket) => {
+  const index = tickets.value.findIndex(t => t.id === ticket.id);
+  if(index !== -1) tickets.value[index] = ticket;
+};
+
+//Handle methods UI interactions / back-end interactions
+const handleCreateTicket = async (data: { title: string; description: string; }) => {
+  const result = await createTicket({title: data.title, description: data.description, scrumboardId: boardId, priority: TicketPriority.Medium});
   
   if (!result.success) {
     localErrors.value = result.errors;
     return;
   }
 
-  tickets.value.push(result.data);
-  title.value = "";
-  description.value = "";
   localErrors.value = [];
   showCreateTicket.value = false;
 };
 
-const handleUpdateTicket = async () => {
+const handleUpdateTicket = async (data: { title: string; description: string}) => {
   if (!selectedTicket.value) return;
 
-  const result = await updateTicket(selectedTicket.value.id, { title: editTitle.value, description: editDescription.value, priority: selectedTicket.value.priority });
+  const result = await updateTicket(selectedTicket.value.id, { title: data.title, description: data.description, priority: selectedTicket.value.priority });
   if (!result.success) {
     localErrors.value = result.errors;
     return;
   }
 
-  const index = tickets.value.findIndex(t => t.id === result.data.id);
-  tickets.value[index] = result.data;
-
-  showTicketModal.value = false;
+  closeTicketModal();
 };
 
 const handleDeleteTicket = async () => {
@@ -173,13 +137,11 @@ const handleDeleteTicket = async () => {
     localErrors.value = result.errors;
     return;
   }
-  
-  tickets.value = tickets.value
-    .filter(t=> t.id !== selectedTicket.value?.id);
 
-  showTicketModal.value = false;
+  closeTicketModal();
 };
 
+//Handle methods SignalR real-time updates
 const handleAssignSelfToTicket = async () => {
   if (!selectedTicket.value) return;
 
@@ -188,29 +150,87 @@ const handleAssignSelfToTicket = async () => {
     localErrors.value = result.errors;
     return;
   }
-
-  const index = tickets.value
-    .findIndex(t => t.id === result.data.id);
-
-  tickets.value[index] = result.data;
-  selectedTicket.value = result.data;
 };
 
-const handleStatusChange = async () => {
+const handleStatusChange = async (status: TicketStatus) => {
   if (!selectedTicket.value) return;
 
-  const result = await updateStatus(selectedTicket.value.id, selectedStatus.value);
+  const result = await updateStatus(selectedTicket.value.id, { status });
   if (!result.success) {
     localErrors.value = result.errors;
     return;
   }
-
-  const index = tickets.value
-    .findIndex(t => t.id === result.data.id);
-
-  tickets.value[index] = result.data;
-  selectedTicket.value = result.data;
 };
+
+const handleTicketCreated = (createdTicket: Ticket) => {
+  const exists = tickets.value.some(t => t.id === createdTicket.id);
+  if (!exists) tickets.value.push(createdTicket);
+};
+
+const handleTicketUpdated = (updatedTicket: Ticket) => {
+  updateTicketInList(updatedTicket);
+  if (selectedTicket.value?.id === updatedTicket.id) {
+    selectedTicket.value = updatedTicket;
+  };
+};
+
+const handleTicketDeleted = (deletedId: number) => {
+  tickets.value = tickets.value.filter(t => t.id !== deletedId);
+  if (selectedTicket.value?.id === deletedId) {
+    selectedTicket.value = null;
+    showTicketModal.value = false;
+  }
+};
+
+const handleTicketAssigned = (updatedTicket: Ticket) => {
+  updateTicketInList(updatedTicket);
+  if (selectedTicket.value?.id === updatedTicket.id) selectedTicket.value = updatedTicket;
+};
+
+const handleTicketStatusChanged = (updatedTicket: Ticket) => {
+  updateTicketInList(updatedTicket);
+  if (selectedTicket.value?.id === updatedTicket.id) {
+    selectedTicket.value = updatedTicket;
+  }
+};
+
+const signalREvents = [
+  ["TicketAssigned", handleTicketAssigned],
+  ["TicketStatusChanged", handleTicketStatusChanged],
+  ["TicketCreated", handleTicketCreated],
+  ["TicketUpdated", handleTicketUpdated],
+  ["TicketDeleted", handleTicketDeleted]
+] as const;
+
+const registerSignalREvents = () => {
+  signalREvents.forEach(
+    ([event, handler]) => {
+      signalRConnection.on(
+        event,
+        handler
+      );
+    }
+  );
+};
+
+const unregisterSignalREvents = () => {
+  signalREvents.forEach(
+    ([event, handler]) => {
+      signalRConnection.off(
+        event,
+        handler
+      );
+    }
+  );
+};
+
+const loadBoard = async () => {
+  const [boardResponse, ticketResponse ] = await Promise.all([getBoard(boardId), getScrumboardTickets(boardId)]);
+  board.value = boardResponse.data;
+  tickets.value = ticketResponse.data;
+};
+
+
 
 onMounted(async () => {
     if (isNaN(boardId)) {
@@ -219,29 +239,11 @@ onMounted(async () => {
     }
 
     try {
-      const [boardResponse, ticketResponse ] = await Promise.all([getBoard(boardId), getScrumboardTickets(boardId)]);
-      board.value = boardResponse.data;
-      tickets.value = ticketResponse.data;
+      await loadBoard();
 
-      await signalRConnection.start();
+      if (signalRConnection.state === "Disconnected") await signalRConnection.start();
+      registerSignalREvents();
       await signalRConnection.invoke("JoinScrumboard", boardId);
-
-      signalRConnection.on("TicketAssigned", (updatedTicket: Ticket) => {
-        const index = tickets.value
-          .findIndex(t => t.id === updatedTicket.id);
-
-        if (index !== -1) tickets.value[index] = updatedTicket;
-        if (selectedTicket.value?.id === updatedTicket.id) selectedTicket.value = updatedTicket;
-      });
-      
-      signalRConnection.on("TicketStatusChanged", (updatedTicket: Ticket) => {
-        const index = tickets.value
-          .findIndex(t => t.id === updatedTicket.id);
-
-        if (index !== -1) tickets.value[index] = updatedTicket;
-        if (selectedTicket.value?.id === updatedTicket.id) selectedTicket.value = updatedTicket;
-        selectedStatus.value = updatedTicket.status;
-      });
     }
     catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -250,6 +252,14 @@ onMounted(async () => {
         } 
       }
     }
+});
+
+onUnmounted(async () => {
+  try {
+    await signalRConnection.invoke("LeaveScrumboard", boardId);
+  }
+  catch {}
+  unregisterSignalREvents();
 });
 </script>
 
@@ -285,7 +295,6 @@ onMounted(async () => {
 }
 
 /* Columns */
-
 .board-columns {
     display: flex;
     gap: 1.5rem;
@@ -293,91 +302,25 @@ onMounted(async () => {
     overflow-x: auto;
 }
 
-.board-column {
-    min-width: 320px;
-    flex: 1;
-
-    border-radius: 18px;
-    background: #1e1e1e;
-
-    padding: 1rem;
-}
-
-.column-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    margin-bottom: 1rem;
-}
-
-.column-header span {
-    background: #2d2d2d;
-
-    padding:
-        0.25rem 0.65rem;
-
-    border-radius: 999px;
-}
-
-/* Tickets */
-
-.ticket-card {
-    background: #292929;
-
-    border-radius: 14px;
-
-    padding: 1rem;
-
-    margin-bottom: 1rem;
-
-    cursor: pointer;
-
-    transition:
-        transform 0.2s ease,
-        background-color 0.2s ease;
-}
-
-.ticket-card:hover {
-    transform:
-        translateY(-3px);
-
-    background: #343434;
-}
-
-.ticket-card h4 {
-    margin-bottom: 0.5rem;
-}
-
-.ticket-card p {
-    color: #b0b0b0;
-    font-size: 0.95rem;
-}
-
 .loading-state {
     padding: 3rem;
 }
 
-/* Modal */
+/* Modal overlay */
 .modal-overlay {
     position: fixed;
     inset: 0;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
-    background:
-        rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.5);
 }
 
 .ticket-modal {
     width: 500px;
     max-width: 90%;
-
     border-radius: 20px;
     background: #1e1e1e;
-
     padding: 2rem;
 }
 
@@ -391,7 +334,6 @@ onMounted(async () => {
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-
     margin-top: 1.5rem;
 }
 </style>

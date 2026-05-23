@@ -13,14 +13,14 @@
 
 <script setup lang="ts">
 defineProps<{
-    title: string,
-    subtitle: string
+    title: string;
+    subtitle: string;
 }>();
 </script>
 
 <style scoped>
 .auth-card-container {
-    height: 100vh;
+    min-height: 100vh;
     margin: 0 auto;
     padding: 2rem;
     display: grid;

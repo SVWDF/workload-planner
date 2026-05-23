@@ -1,5 +1,13 @@
 import http from "../api/http";
-import { type CreateScrumBoardRequest } from '../types/scrumboard';
+import { type CreateScrumBoardRequest, type ScrumBoardCreatedResponse } from '../types/scrumboard';
+
+const scrumboardSuccess = (data: ScrumBoardCreatedResponse) => ({
+    success: true, errors: [], data
+});
+
+const scrumboardFail = (err: unknown, fallback: string) => ({
+    success: false, errors: (err as { customErrors?: string[]}).customErrors ?? [fallback], data: null
+});
 
 const getBoards = async () => {
     return await http.get("/scrumboards");
@@ -11,24 +19,18 @@ const getBoard = async(id: number) => {
 
 const createScrumBoard = async (data: CreateScrumBoardRequest) => {
     try {
-        const response = await http.post("/scrumboards", data);
-        return { success: true, errors: [] as string[], data: response.data };
+        const response = await http.post<ScrumBoardCreatedResponse>("/scrumboards", data);
+        return scrumboardSuccess(response.data);
     }
     catch (err: unknown) {
-        const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Scrumboard creation failed"];
-        return { success: false, errors, data: null };
+        return scrumboardFail(err, "Scrumboard creation failed");
     }
-};
-
-const getBoardColors = async () => {
-    return await http.get("/boardcolors");
 };
 
 export function useScrumBoards() {
     return {
         getBoards,
         getBoard,
-        createScrumBoard,
-        getBoardColors
+        createScrumBoard
     }
 }

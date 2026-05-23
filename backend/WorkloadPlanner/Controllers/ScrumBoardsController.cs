@@ -29,12 +29,12 @@ namespace WorkloadPlanner.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ScrumBoardListDTO>>> GetBoards()
+        public async Task<ActionResult<IEnumerable<ScrumBoardListDTO>>> GetScrumBoards()
         {
             try
             {
-                var user = await GetUserAsync();
-                var boards = await _scrumboardService.GetBoardsForUserAsync(user!.Id);
+                ApplicationUser user = await GetUserAsync();
+                IEnumerable<ScrumBoardListDTO> boards = await _scrumboardService.GetScrumBoardsForUserAsync(user.Id);
                 return Ok(boards);
             }
             catch (UserNotFoundException)
@@ -48,19 +48,19 @@ namespace WorkloadPlanner.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ScrumBoardDetailDTO>> GetBoard(int id)
+        public async Task<ActionResult<ScrumBoardDetailDTO>> GetScrumBoard(int id)
         {
             try
             {
-                var user = await GetUserAsync();
-                var board = await _scrumboardService.GetBoardByIdAsync(id, user!.Id);
+                ApplicationUser user = await GetUserAsync();
+                ScrumBoardDetailDTO board = await _scrumboardService.GetScrumBoardByIdAsync(id, user.Id);
                 return Ok(board);    
             }
             catch (UserNotFoundException)
             {
                 return Unauthorized();
             }
-            catch (ScrumboardNotFoundException)
+            catch (ScrumBoardNotFoundException)
             {
                 return NotFound();
             }
@@ -71,11 +71,11 @@ namespace WorkloadPlanner.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ScrumBoardDetailDTO>> CreateBoard([FromBody] CreateScrumBoardDTO dto)
+        public async Task<ActionResult<ScrumBoardCreatedDTO>> CreateScrumBoard([FromBody] CreateScrumBoardDTO dto)
         {
             if (!ModelState.IsValid)
             {
-                var validationErrors = ModelState.Values
+                List<string> validationErrors = ModelState.Values
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage)
                     .ToList();
@@ -85,8 +85,8 @@ namespace WorkloadPlanner.Controllers
 
             try
             {
-                var user = await GetUserAsync();
-                var board = await _scrumboardService.CreateBoardAsync(dto, user!.Id);
+                ApplicationUser user = await GetUserAsync();
+                ScrumBoardCreatedDTO board = await _scrumboardService.CreateScrumBoardAsync(dto, user.Id);
                 return Ok(board);
             }
             catch (UserNotFoundException)

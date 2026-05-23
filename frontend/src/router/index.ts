@@ -14,27 +14,21 @@ const router = createRouter({
     { path: "/register", component: RegisterPage, name: "Register", meta: { requiresAuth: false } },
     { path: "/", component: AppLayout, meta: { requiresAuth: true },
     children: [
+        { path: "", redirect: "/dashboard" },
         { path: "dashboard",  component: DashboardPage, name: "Dashboard" },
-        { path: "boards/create", component: CreateBoardPage, name: "Create board" },
+        { path: "boards/create", component: CreateBoardPage, name: "CreateBoard" },
         { path: "boards/:slug", component: BoardPage, name: "Board" }
     ] }
   ],
 });
 
-router.beforeEach(async (to, _, next) => {
+router.beforeEach(async to => {
     const { loggedIn, initialized, fetchCurrentUser } = useAuth();
 
     if (!initialized.value) await fetchCurrentUser();
-
-    if (to.meta.requiresAuth && !loggedIn.value) {
-        next("/login");
-    } 
-    else if (!to.meta.requiresAuth && loggedIn.value) {
-        next("/dashboard");
-    }
-    else {
-        next();
-    }
-});
+    if (to.meta.requiresAuth === true && !loggedIn.value) return "/login"; 
+    if (to.meta.requiresAuth === false && loggedIn.value) return "/dashboard";
+  }
+);
 
 export default router

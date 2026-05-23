@@ -22,7 +22,7 @@ namespace WorkloadPlanner.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var validationErrors = ModelState.Values
+                List<string> validationErrors = ModelState.Values
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage)
                     .ToList();
@@ -50,7 +50,7 @@ namespace WorkloadPlanner.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var validationErrors = ModelState.Values
+                List<string> validationErrors = ModelState.Values
                     .SelectMany(v => v.Errors)
                     .Select(e => e.ErrorMessage)
                     .ToList();

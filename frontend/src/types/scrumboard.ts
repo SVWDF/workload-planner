@@ -4,11 +4,16 @@ export interface ScrumBoard {
     color: string;
     members: number;
     tickets: number;
-    isManager?: boolean;
+    isManager?: boolean; //Manager role interface 
 }
 
 export interface CreateScrumBoardRequest {
     name: string;
     color: string;
     memberIds: string[];
+}
+
+export interface ScrumBoardCreatedResponse {
+    id: number;
+    name: string;
 }

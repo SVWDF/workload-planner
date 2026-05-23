@@ -1,6 +1,6 @@
 <template>
     <header>
-        <span>Workload Planner X</span>
+        <RouterLink to="/dashboard" class="logo">Workload Planner X</RouterLink>
         <nav>
             <button @click="handleLogout">Logout</button>
         </nav>
@@ -8,16 +8,21 @@
 </template>
 
 <script setup lang="ts">
+import signalRConnection from "@/services/signalr";
 import { useAuth } from "../composables/auth";
 import { useRouter } from "vue-router";
 
-const { logout, clearAuth } = useAuth();
+const { logout } = useAuth();
 const router = useRouter();
 
 const handleLogout = async () => {
-  await logout();
-  clearAuth();
-  router.push("/login");
+  try {
+    await signalRConnection.stop();
+    await logout();
+  }
+  finally {
+    router.push("/login");
+  }
 };
 </script>
 
@@ -31,9 +36,10 @@ header {
     box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
 }
 
-span {
+.logo {
     font-size: 1.75rem;
     font-weight: 700;
+    color: white;
 }
 
 button {

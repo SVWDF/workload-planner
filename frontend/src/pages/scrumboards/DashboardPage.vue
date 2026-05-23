@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
-    <span>Your Workspaces</span>
-    <button @click="goToCreateBoard">
+    <h2 class="dashboard-title">Your Workspaces</h2>
+    <button class="create-board-button" @click="goToCreateBoard">
         Create Board
     </button>
     <div class="scrumboards-grid">
@@ -11,58 +11,79 @@
         :board="board"
         @click="openBoard(board)"
       />
+      <div v-if="localErrors.length" class="error-box">
+        <p v-for="(e, i) in localErrors" :key="i">
+          {{ e }}
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useScrumBoards } from '@/composables/scrumboard';
 import { type ScrumBoard } from '@/types/scrumboard';
 import { createSlug } from '@/helpers/slug';
 import BoardCard from '@/components/BoardCard.vue';
+import signalRConnection from '@/services/signalr';
 
 const router = useRouter();
 const { getBoards } = useScrumBoards();
 const boards = ref<ScrumBoard[]>([]);
+const localErrors = ref<string[]>([]);
 
 const loadBoards = async () => {
   try {
     const result = await getBoards()
     boards.value = result.data
+    localErrors.value = [];
   }
-  catch (error) {
-    console.error("Failed to load boards", error);
+  catch (err: unknown) {
+    localErrors.value = (err as { customErrors?: string[]}).customErrors ?? ["Failed to load boards"];
   }
 } 
 
 const goToCreateBoard = () => {
-  router.push("/boards/create");
+  router.push({ name: "CreateBoard" });
 };
 
 const openBoard = (board: ScrumBoard) => {
   const slug = createSlug(board.name);
-  router.push(`/boards/${slug}-${board.id}`);
+  router.push({ name: "Board", params: { slug: `${slug}-${board.id}`}});
 };
 
-onMounted(loadBoards)
+const handleScrumboardCreated = (newScrumboard: ScrumBoard) => {
+  const exists = boards.value.some(sb => sb.id === newScrumboard.id);
+  if (!exists) boards.value.push(newScrumboard);
+};
+
+onMounted(async () => {
+  if (signalRConnection.state === "Disconnected") await signalRConnection.start();
+  signalRConnection.on("ScrumboardCreated", handleScrumboardCreated);
+  await loadBoards();
+});
+
+onUnmounted(() => {
+  signalRConnection.off("ScrumboardCreated", handleScrumboardCreated);
+});
 </script>
 
 <style scoped>
-div.dashboard > span {
+div.dashboard > h2 {
   font-size: 1.25rem;
   font-weight: 700;
   margin-right: 24px;
 }
 
-div.dashboard > button {
+div.dashboard > button.create-board-button {
   border: none;
   background-color: #4f8cff;
   transition: background 0.25s ease, transform 0.1s ease;
 }
 
-div.dashboard > button:hover {
+div.dashboard > button.create-board-button:hover {
   background-color: #3d79e6;
 }
 
@@ -76,6 +97,26 @@ div.scrumboards-grid {
   gap: 16px;
 
 }
+
+error-box {
+  background: rgba(255, 77, 77, 0.1);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 8px;
+  padding-inline: 0.5rem;
+  margin-top: 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 200px;
+  box-sizing: border-box;
+}
+
+.error-box > p {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
 @media (min-width: 992px) {
   div.scrumboards-grid {
     grid-template-columns: repeat(3, 1fr);

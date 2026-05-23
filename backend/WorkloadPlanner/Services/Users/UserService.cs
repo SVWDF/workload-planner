@@ -14,17 +14,20 @@ namespace WorkloadPlanner.Services.Users
             _userManager = userManager;
         }
 
-        public async Task<IEnumerable<UserSearchDTO>> SearchUsersAsync(string query)
+        public async Task<IEnumerable<UserSearchDTO>> SearchUsersAsync(string query, string currentUserId)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
                 return [];
             }
 
+            query = query.ToLower();
             return await _userManager.Users
+                .AsNoTracking()
                 .Where(u => 
-                    u.UserName!.Contains(query) ||
-                    u.Email!.Contains(query))
+                    u.Id != currentUserId && (
+                    u.UserName!.ToLower().Contains(query) ||
+                    u.Email!.ToLower().Contains(query)))
                 .Take(10)
                 .Select(u => new UserSearchDTO
                 {

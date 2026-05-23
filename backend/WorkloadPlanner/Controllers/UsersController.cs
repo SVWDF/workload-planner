@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WorkloadPlanner.DTOs.Users;
@@ -20,7 +21,10 @@ namespace WorkloadPlanner.Controllers
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<UserSearchDTO>>> SearchUsers([FromQuery] string query)
         {
-            return Ok(await _userService.SearchUsersAsync(query));
+            string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            return Ok(await _userService.SearchUsersAsync(query, userId));
         }
     }
 }

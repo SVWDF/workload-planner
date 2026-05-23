@@ -4,6 +4,6 @@ namespace WorkloadPlanner.Services.Users
 {
     public interface IUserService
     {
-        Task<IEnumerable<UserSearchDTO>> SearchUsersAsync(string query);
+        Task<IEnumerable<UserSearchDTO>> SearchUsersAsync(string query, string currentUserId);
     }
 }

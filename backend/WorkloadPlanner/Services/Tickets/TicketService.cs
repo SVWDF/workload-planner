@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using WorkloadPlanner.DTOs.Tickets;
 using WorkloadPlanner.Enums;
+using WorkloadPlanner.Exceptions.Ticket;
 using WorkloadPlanner.Hubs;
 using WorkloadPlanner.Models;
 using WorkloadPlanner.Repositories.Tickets;
@@ -21,28 +22,64 @@ namespace WorkloadPlanner.Services.Tickets
             _hubContext = hubContext;
         }
 
+        private async Task<Ticket> GetTicketOrThrowAsync(int id)
+        {
+            return await _repository.GetTicketAsync(id) ?? throw new TicketNotFoundException();
+        }
+
+        private async Task EnsureManagerAsync(int scrumboardId, string userId)
+        {
+            bool isManager = await _repository.IsScrumboardManagerAsync(scrumboardId, userId);
+            if (!isManager) throw new UnauthorizedAccessException();
+        }
+
+        private async Task EnsureMemberAsync(int scrumboardId, string userId)
+        {
+            bool isMember = await _repository.IsScrumboardMemberAsync(scrumboardId, userId);
+            if (!isMember) throw new UnauthorizedAccessException();
+        }
+
+        private async Task EnsureScrumBoardAccessAsync(int scrumboardId, string userId)
+        {
+            bool isManager = await _repository.IsScrumboardManagerAsync(scrumboardId, userId);
+            bool isMember = await _repository.IsScrumboardMemberAsync(scrumboardId, userId);
+            if (!isManager && !isMember) throw new UnauthorizedAccessException();
+        }
+
+        private async Task NotifyScrumboardAsync(int scrumboardId, string eventName, object payload)
+        {
+            await _hubContext
+                .Clients
+                .Group($"scrumboard-{scrumboardId}")
+                .SendAsync(eventName, payload);
+        }
+
+        private TicketDTO MapTicketDTO(Ticket ticket)
+        {
+            return new TicketDTO
+            {
+                Id = ticket.Id,
+                Title = ticket.Title,
+                Description = ticket.Description,
+                Priority = ticket.Priority,
+                Status = ticket.Status,
+                AssignedUser = ticket.AssignedUser?.UserName  
+            };
+        }
+
         public async Task<IEnumerable<TicketDTO>> GetScrumboardTicketsAsync(int scrumboardId, string userId)
         {
-            var tickets = await _repository.GetScrumboardTicketsAsync(scrumboardId);
+            await EnsureScrumBoardAccessAsync(scrumboardId, userId);
+            IEnumerable<Ticket> tickets = await _repository.GetScrumboardTicketsAsync(scrumboardId);
             return tickets
-                .Select(t =>
-                    new TicketDTO
-                    {
-                        Id = t.Id,
-                        Title = t.Title,
-                        Description = t.Description,
-                        Status = t.Status,
-                        Priority = t.Priority,
-                        AssignedUser = t.AssignedUser?.UserName
-                    });
+                .Select(t => MapTicketDTO(t));
         }
 
         public async Task<TicketDTO> CreateTicketAsync(CreateTicketDTO dto, string userId)
         {
-            var isManager = await _repository.IsScrumboardManagerAsync(dto.ScrumBoardId, userId);
-            if (!isManager) throw new UnauthorizedAccessException();
+            await EnsureManagerAsync(dto.ScrumBoardId, userId);
 
-            var ticket = new Ticket
+            Ticket ticket = new Ticket
             {
                 Title = dto.Title,
                 Description = dto.Description,
@@ -52,108 +89,78 @@ namespace WorkloadPlanner.Services.Tickets
                 CreatedAt = DateTime.UtcNow,
                 CreatedById = userId
             };
+            await _repository.CreateTicketAsync(ticket);
 
-            ticket = await _repository.CreateTicketAsync(ticket);
-            return new TicketDTO
-            {
-                Id = ticket.Id,
-                Title = ticket.Title,
-                Description = ticket.Description,
-                Priority = ticket.Priority,
-                Status = ticket.Status
-            };
+            TicketDTO ticketDTO = MapTicketDTO(ticket);
+
+            await NotifyScrumboardAsync(ticket.ScrumBoardId, "TicketCreated", ticketDTO);
+            
+            return ticketDTO;
         }
 
         public async Task<TicketDTO> UpdateTicketAsync(int id, UpdateTicketDTO dto, string userId)
         {
-            var ticket = await _repository.GetTicketAsync(id);
-            if (ticket == null) throw new KeyNotFoundException();
+            Ticket ticket = await GetTicketOrThrowAsync(id);
 
-            var isManager = await _repository.IsScrumboardManagerAsync(ticket.ScrumBoardId, userId);
-            if (!isManager) throw new UnauthorizedAccessException();
+            await EnsureManagerAsync(ticket.ScrumBoardId, userId);
 
             ticket.Title = dto.Title;
             ticket.Description = dto.Description;
             ticket.Priority = dto.Priority;
             await _repository.UpdateTicketAsync(ticket);
 
-            return new TicketDTO
-            {
-                Id = ticket.Id,
-                Title = ticket.Title,
-                Description = ticket.Description,
-                Priority = ticket.Priority,
-                Status = ticket.Status
-            };
+            TicketDTO ticketDTO = MapTicketDTO(ticket);
+
+            await NotifyScrumboardAsync(ticket.ScrumBoardId, "TicketUpdated", ticketDTO);
+            
+            return ticketDTO;
         }
 
         public async Task DeleteTicketAsync(int id, string userId)
         {
-            var ticket = await _repository.GetTicketAsync(id);
-            if (ticket == null) throw new KeyNotFoundException();
+            Ticket ticket = await GetTicketOrThrowAsync(id);
 
-            var isManager = await _repository.IsScrumboardManagerAsync(ticket.ScrumBoardId, userId);
-            if (!isManager) throw new UnauthorizedAccessException();
+            await EnsureManagerAsync(ticket.ScrumBoardId, userId);
+
+            int scrumboardId = ticket.ScrumBoardId;
+            int ticketId = ticket.Id;
 
             await _repository.DeleteTicketAsync(ticket);
+
+            await NotifyScrumboardAsync(scrumboardId, "TicketDeleted", ticketId);
         }
 
         public async Task<TicketDTO> AssignSelfToTicketAsync(int id, string userId)
         {
-            var ticket = await _repository.GetTicketAsync(id);
-            if (ticket == null) throw new KeyNotFoundException();
+            Ticket ticket = await GetTicketOrThrowAsync(id);
 
-            var isMember = await _repository.IsScrumboardMemberAsync(ticket.ScrumBoardId, userId);
-            if (!isMember) throw new UnauthorizedAccessException();
+            await EnsureMemberAsync(ticket.ScrumBoardId, userId);
 
             ticket.AssignedUserId = userId;
             await _repository.SaveChangesAsync();
 
-            var user = await _userManager.FindByIdAsync(userId);
-            var dto = new TicketDTO
-            {
-                Id = ticket!.Id,
-                Title = ticket.Title,
-                Description = ticket.Description,
-                Priority = ticket.Priority,
-                Status = ticket.Status,
-                AssignedUser = user?.UserName
-            };
+            ApplicationUser? user = await _userManager.FindByIdAsync(userId);
+            TicketDTO ticketDTO = MapTicketDTO(ticket);
+            ticketDTO.AssignedUser = user?.UserName;
 
-            await _hubContext
-                .Clients
-                .Group($"scrumboard-{ticket.ScrumBoardId}")
-                .SendAsync("TicketAssigned", dto);
-
-            return dto;
+            await NotifyScrumboardAsync(ticket.ScrumBoardId, "TicketAssigned", ticketDTO);
+            
+            return ticketDTO;
         }
 
         public async Task<TicketDTO> UpdateStatusAsync(int id, UpdateTicketStatusDTO dto, string userId)
         {
-            var ticket = await _repository.GetTicketAsync(id);
-            if (ticket == null) throw new KeyNotFoundException();
+            Ticket ticket = await GetTicketOrThrowAsync(id);
 
-            var isMember = await _repository.IsScrumboardMemberAsync(ticket.ScrumBoardId, userId);
-            if (!isMember) throw new UnauthorizedAccessException();
+            await EnsureMemberAsync(ticket.ScrumBoardId, userId);
 
             ticket.Status = dto.Status;
             await _repository.SaveChangesAsync();
 
-            var ticketDTO = new TicketDTO
-            {
-                Id = ticket.Id,
-                Title = ticket.Title,
-                Description = ticket.Description,
-                Priority = ticket.Priority,
-                Status = ticket.Status,
-                AssignedUser = ticket.AssignedUser?.UserName
-            };
+            TicketDTO ticketDTO = MapTicketDTO(ticket);
 
-            await _hubContext
-                .Clients
-                .Group($"scrumboard-{ticket.ScrumBoardId}")
-                .SendAsync("TicketStatusChanged", ticketDTO);
-
+            await NotifyScrumboardAsync(ticket.ScrumBoardId, "TicketStatusChanged", ticketDTO);
+            
             return ticketDTO;
         }
     }

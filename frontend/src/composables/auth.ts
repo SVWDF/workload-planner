@@ -7,15 +7,22 @@ const state = reactive({
   initialized: false
 });
 
+const authSuccess = () => ({
+  success: true, errors: []
+});
+
+const authFail = (err: unknown, fallback: string) => ({
+  success: false, errors: (err as { customErrors?: string[] }).customErrors ?? [fallback]
+});
+
 const login = async (data: LoginRequest) => {
   try {
     await http.post("/auth/login", data);
     state.loggedIn = true;
-    return { success: true, errors: [] as string[] };
+    return authSuccess();
   } 
   catch (err: unknown) {
-    const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Login failed"];
-    return { success: false, errors };
+    return authFail(err, "Login failed");
   }
 }
 
@@ -23,17 +30,20 @@ const register = async (data: RegisterRequest) => {
   try {
     await http.post("/auth/register", data);
     state.loggedIn = true;
-    return { success: true, errors: [] as string[] };
+    return authSuccess();
   } 
   catch (err: unknown) {
-    const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Registration failed"];
-    return { success: false, errors };
+    return authFail(err, "Registration failed");
   }
 }
 
 const logout = async () => {
-  await http.post("/auth/logout");
-  state.loggedIn = false;
+  try {
+    await http.post("/auth/logout");
+  }
+  finally {
+    clearAuth();
+  }
 }
 
 const fetchCurrentUser = async () => {
@@ -51,6 +61,7 @@ const fetchCurrentUser = async () => {
 
 const clearAuth = () => {
   state.loggedIn = false;
+  state.initialized = false;
 };
 
 export function useAuth() {

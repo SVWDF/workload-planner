@@ -13,9 +13,10 @@ namespace WorkloadPlanner.Repositories.ScrumBoards
             _context = context;
         }
 
-        public async Task<IEnumerable<ScrumBoard>> GetBoardsAsync(string userId)
+        public async Task<IEnumerable<ScrumBoard>> GetScrumBoardsAsync(string userId)
         {
             return await _context.ScrumBoards
+                .AsNoTracking()
                 .Where(b => b.Members.Any(bm => bm.UserId == userId))
                 .Select(b => new ScrumBoard
                 {
@@ -28,31 +29,35 @@ namespace WorkloadPlanner.Repositories.ScrumBoards
                 .ToListAsync();
         }
 
-        public async Task<ScrumBoard?> GetBoardAsync(int id, string userId)
+        public async Task<ScrumBoard?> GetScrumBoardAsync(int id, string userId)
         {
-            return await _context.BoardMembers
-                .Where(m => m.UserId == userId && m.ScrumBoardId == id)
-                .Select(m => new ScrumBoard
+            return await _context.ScrumBoards
+                .AsNoTracking()
+                .Where(b => b.Id == id && b.Members.Any(m => m.UserId == userId))
+                .Select(b => new ScrumBoard
                 {
-                    Id = m.ScrumBoard!.Id,
-                    Name = m.ScrumBoard.Name,
-                    MemberCount = m.ScrumBoard.Members.Count(),
-                    TicketCount = m.ScrumBoard.Tickets.Count(),
-                    ManagerId = m.ScrumBoard.ManagerId
+                    Id = b.Id,
+                    Name = b.Name,
+                    MemberCount = b.Members.Count(),
+                    TicketCount = b.Tickets.Count(),
+                    ManagerId = b.ManagerId
                 })
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<ScrumBoard> CreateBoardAsync(ScrumBoard board)
+        public Task<ScrumBoard> CreateScrumBoardAsync(ScrumBoard board)
         {
             _context.ScrumBoards.Add(board);
-            await _context.SaveChangesAsync();
-            return board;
+            return Task.FromResult(board);
         }
 
-        public async Task AddBoardMembersAsync(IEnumerable<BoardMember> members)
+        public async Task AddScrumBoardMembersAsync(IEnumerable<BoardMember> members)
         {
             await _context.BoardMembers.AddRangeAsync(members);
+        }
+
+        public async Task SaveChangesAsync()
+        {
             await _context.SaveChangesAsync();
         }
     }

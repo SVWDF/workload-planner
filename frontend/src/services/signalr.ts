@@ -2,7 +2,7 @@ import * as signalR from "@microsoft/signalr";
 
 const signalRConnection = new signalR
     .HubConnectionBuilder()
-    .withUrl("https://localhost:7173/scrumboardHub", { withCredentials: true })
+    .withUrl(`${import.meta.env.VITE_API_URL}/scrumboardHub`, { withCredentials: true })
     .withAutomaticReconnect()
     .build();
 

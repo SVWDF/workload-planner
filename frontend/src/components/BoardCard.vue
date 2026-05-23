@@ -2,10 +2,10 @@
     <div class="board-card">
         <div class="board-color" :style="{ backgroundColor: board.color }"></div>
         <div class="board-content">
-            <span>{{ board.name }}</span>
-            <div>
-                <span>Member: {{ board.members }}</span>
-                <span>Tickets: {{ board.tickets }}</span>
+            <h3>{{ board.name }}</h3>
+            <div class="board-stats">
+                <span>{{ board.members }} {{ board.members === 1 ? "member" : "members" }}</span>
+                <span>{{ board.tickets }} {{ board.tickets === 1 ? "ticket" : "tickets" }}</span>
             </div>
         </div>
     </div>
@@ -15,7 +15,7 @@
 import { type ScrumBoard } from '../types/scrumboard';
 
 defineProps<{
-    board: ScrumBoard
+    board: ScrumBoard;
 }>();
 </script>
 
@@ -28,15 +28,12 @@ defineProps<{
         transform 0.2s ease,
         box-shadow 0.2s ease,
         background-color 0.2s ease;
-    height: 200px;
+    min-height: 200px;
 }
 
 .board-card:hover {
     transform: translateY(-4px);
-
-    box-shadow:
-        0 8px 24px rgba(0,0,0,0.2);
-
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     background-color: #262626;
 }
 
@@ -53,7 +50,7 @@ defineProps<{
     grid-template-rows: auto;
 }
 
-.board-content > span:first-child {
+.board-content > h3 {
     font-size: 1.4rem;
     font-weight: 500;
     margin-bottom: 30px;
@@ -62,7 +59,7 @@ defineProps<{
     text-overflow: ellipsis;
 }
 
-.board-content > div > span {
+div.board-stats > span {
     display: grid;
     grid-template-rows: auto;
     font-size: 0.9rem;

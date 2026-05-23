@@ -71,7 +71,9 @@
   margin-top: 1rem;
   text-align: left;
   font-size: 0.9rem;
-  width: fit-content;
+  width: 100%;
+  max-width: 200px;
+  box-sizing: border-box;
 }
 
 .error-box > p {

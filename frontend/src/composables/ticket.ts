@@ -1,6 +1,13 @@
 import http from "@/api/http";
-import type { CreateTicketRequest, UpdateTicketRequest } from "@/types/ticket";
+import type { CreateTicketRequest, UpdateTicketRequest, UpdateTicketStatusRequest } from "@/types/ticket";
 
+const ticketSuccess = (data: unknown = null) => ({
+    success: true, errors: [], data
+});
+
+const ticketFail = (err: unknown, fallback: string) => ({
+    success: false, errors: (err as { customErrors?: string[] }).customErrors ?? [fallback], data: null
+});
 
 const getScrumboardTickets = async (scrumboardId: number) => {
     return await http.get(`/tickets/scrumboard/${scrumboardId}`);
@@ -9,55 +16,50 @@ const getScrumboardTickets = async (scrumboardId: number) => {
 const createTicket = async (data: CreateTicketRequest) => {
     try {
         const response = await http.post("/tickets", data);
-        return { success: true, errors: [] as string[], data: response.data };
+        return ticketSuccess(response.data);
     }
     catch (err: unknown) {
-        const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Failed to create ticket"];
-        return { success: false, errors, data: null };
+        return ticketFail(err, "Failed to create ticket");
     }
 };
 
 const updateTicket = async (id: number, data: UpdateTicketRequest) => {
     try {
         const response = await http.put(`/tickets/${id}`, data);
-        return { success: true, errors: [] as string[], data: response.data };
+        return ticketSuccess(response.data);
     }
     catch (err: unknown) {
-        const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Failed to update ticket"];
-        return { success: false, errors, data: null };
+        return ticketFail(err, "Failed to update ticket");
     }
 };
 
 const deleteTicket = async (id: number) => {
     try {
         await http.delete(`/tickets/${id}`);
-        return { success: true, errors: [] as string[] };
+        return ticketSuccess();
     }
     catch (err: unknown) {
-        const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Failed to delete the ticket"];
-        return { success: false, errors, data: null };
+        return ticketFail(err, "Failed to delete ticket");
     }
 };
 
 const assignSelfToTicket = async (id: number) => {
     try {
         const response = await http.patch(`/tickets/${id}/assign`);
-        return { success: true, errors: [] as string[], data: response.data };
+        return ticketSuccess(response.data);
     }
     catch (err: unknown) {
-        const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Failed to assign to the ticket"];
-        return { success: false, errors, data: null };
+        return ticketFail(err, "Failed to assign user to ticket");
     }
 };
 
-const updateStatus = async (id: number, status: number) => {
+const updateStatus = async (id: number, data: UpdateTicketStatusRequest) => {
     try {
-        const response = await http.patch(`/tickets/${id}/status`, { status });
-        return { success: true, errors: [] as string[], data: response.data };
+        const response = await http.patch(`/tickets/${id}/status`, data);
+        return ticketSuccess(response.data)
     }
     catch (err: unknown) {
-        const errors = (err as { customErrors?: string[]; }).customErrors ?? ["Failed to update the status of the ticket"];
-        return { success: false, errors, data: null };
+        return ticketFail(err, "Failed to update status of ticket")
     }
 };
 

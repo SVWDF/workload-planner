@@ -1,7 +1,7 @@
 <template>
   <AuthCard
   title="Workload Planner X"
-  subtitle="Register here to start working in your new workspace"
+  subtitle="Register to start managing your workload"
   class="register-card">
     <form @submit.prevent="handleRegister" class="register-form">
       <input
@@ -9,6 +9,7 @@
         type="text"
         placeholder="First name"
         required
+        autocomplete="given-name"
         class="auth-input"
       />
       <input 
@@ -16,6 +17,7 @@
         type="text"
         placeholder="Last name"
         required
+        autocomplete="family-name"
         class="auth-input"
       />
       <input 
@@ -23,6 +25,7 @@
         type="text"
         placeholder="Username"
         required
+        autocomplete="username"
         class="auth-input"
       />
       <input
@@ -30,6 +33,7 @@
         type="email"
         placeholder="Email"
         required
+        autocomplete="email"
         class="auth-input"
       />
       <input
@@ -37,9 +41,10 @@
         type="password"
         placeholder="Password"
         required
+        autocomplete="new-password"
         class="auth-input"
       />
-      <button type="submit" class="auth-button">Register</button>
+      <button type="submit" class="auth-button" :disabled="loading">Register</button>
     </form>
     <div v-if="localErrors.length" class="error-box">
       <p v-for="(e, i) in localErrors" :key="i">{{ e }}</p>
@@ -59,33 +64,41 @@ import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "@/composables/auth";
 import AuthCard from "@/components/AuthCard.vue";
+import type { RegisterRequest } from "@/types/auth";
 
 const { register } = useAuth();
 const router = useRouter();
 
-const form = reactive({
+const form = reactive<RegisterRequest>({
   firstName: "",
   lastName: "",
   username: "",
   email: "",
   password: ""
 });
+const loading = ref(false);
 const localErrors = ref<string[]>([]);
 
 const handleRegister = async () => {
-  const result = await register({
-      firstName: form.firstName,
-      lastName: form.lastName,
-      username: form.username,
-      email: form.email,
-      password: form.password,
-  });
-  if (result.success) {
-    localErrors.value = [];
-    router.push("/dashboard");
-  } 
-  else {
-    localErrors.value = result.errors;
+  loading.value = true;
+  try {
+    const result = await register({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        username: form.username,
+        email: form.email,
+        password: form.password,
+    });
+    if (result.success) {
+      localErrors.value = [];
+      router.push("/dashboard");
+    } 
+    else {
+      localErrors.value = result.errors;
+    }
+  }
+  finally {
+    loading.value = false;
   }
 };
 </script>

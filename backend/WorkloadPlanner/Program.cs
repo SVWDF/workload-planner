@@ -11,14 +11,13 @@ using WorkloadPlanner.Services.ScrumBoards;
 using WorkloadPlanner.Services.Tickets;
 using WorkloadPlanner.Services.Users;
 
-var builder = WebApplication.CreateBuilder(args);
-
 //Load .env file
 Env.Load();
 
-//Configure MySQL database
-var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? throw new InvalidOperationException("DB_CONNECTION_STRING not found");
+var builder = WebApplication.CreateBuilder(args);
 
+//Setup database connection
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Database connection string was not found");
 builder.Services.AddDbContext<WorkloadPlannerDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
@@ -46,20 +45,15 @@ builder.Services.ConfigureApplicationCookie(options =>
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         return Task.CompletedTask;
     };
-
-    // options.Events.OnRedirectToAccessDenied = context =>
-    // {
-    //     context.Response.StatusCode = StatusCodes.Status403Forbidden;
-    //     return Task.CompletedTask;
-    // };
 });
 
 //Configure CORS
+var frontendUrl = builder.Configuration["Frontend:Url"];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(frontendUrl!)
         .AllowCredentials()
         .AllowAnyHeader()
         .AllowAnyMethod();
