@@ -4,7 +4,7 @@
 
     <form @submit.prevent="createBoard">
       <input
-        v-model="name"
+        v-model="form.name"
         placeholder="Board name"
         required
       />
@@ -15,9 +15,9 @@
           v-for="color in colors"
           :key="color"
           class="color-option"
-          :class="{ selected: selectedColor === color }"
+          :class="{ selected: form.color === color }"
           :style="{ backgroundColor: color }"
-          @click="selectedColor = color"
+          @click="form.color = color"
         />
       </div>
 
@@ -53,17 +53,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useScrumBoards } from '../../composables/scrumboard';
 import { useUsers } from "../../composables/user";
 import { type User } from "../../types/user";
 import { createSlug } from "../../helpers/slug";
 import { BOARD_COLORS } from "@/constants/boardColors";
+import type { CreateScrumBoardRequest } from "@/types/scrumboard";
 
-const name = ref("");
+const form = reactive<CreateScrumBoardRequest>({
+  name: "",
+  color: "",
+  memberIds: []
+});
 const colors = ref<string[]>([]);
-const selectedColor = ref("");
 const search = ref("");
 const users = ref<User[]>([]);
 const selectedUsers = ref<User[]>([]);
@@ -72,12 +76,12 @@ const router = useRouter();
 const { createScrumBoard } = useScrumBoards();
 const { searchUsers } = useUsers();
 const boardColors = BOARD_COLORS;
-let timeout: number;
+let timeout: ReturnType<typeof setTimeout>;
 
 const loadColors = async () => {
     colors.value = boardColors;
 
-    selectedColor.value =
+    form.color =
         colors.value[
             Math.floor(Math.random() * colors.value.length)
         ]!;
@@ -94,7 +98,7 @@ const handleSearchUsers = async () => {
     }
   
     try {
-      const response = await searchUsers(search.value);
+      const response = await searchUsers(query);
       users.value = response.data
         .filter((user: User) => !selectedUsers.value
           .some((selected: User) => selected.id === user.id));
@@ -127,17 +131,20 @@ const removeUser = (id: string) => {
 const createBoard = async () => {
   localErrors.value = [];
 
-  const response = await createScrumBoard({
-    name: name.value,
-    color: selectedColor.value,
-    memberIds: selectedUsers.value.map((u: User) => u.id)
-  });
+  form.memberIds = selectedUsers.value.map((u: User) => u.id);
+  const response = await createScrumBoard(form);
 
   if (!response.success || !response.data) {
     localErrors.value = response.errors;
     return;
   }
 
+  form.name = "";
+  form.memberIds = [];
+  selectedUsers.value = [];
+  search.value = "";
+  users.value = [];
+  
   const slug = createSlug(response.data.name);
   router.push({ name: "Board", params: { slug: `${slug}-${response.data.id}`}});
 };

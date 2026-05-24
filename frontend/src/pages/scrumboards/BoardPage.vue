@@ -3,25 +3,25 @@
     <div class="board-header">
       <div>
         <h1>{{ board.name }}</h1>
-        <p>{{ board.members }} members • {{ tickets.length }} tickets</p>
+        <p>
+          {{ board.members }} {{ board.members === 1 ? "member" : "members" }} • 
+          {{ tickets.length }} {{ board.tickets === 1 ? "ticket" : "tickets" }}
+        </p>
       </div>
       <button v-if="board.isManager" @click="showCreateTicket = true" class="create-ticket-btn">+ New Ticket</button>
     </div>
 
     <div class="board-columns">
-
       <BoardColumn
         title="To Do"
         :tickets="todoTickets"
         @open-ticket="openTicket"
       />
-
       <BoardColumn
         title="In Progress"
         :tickets="inProgressTickets"
         @open-ticket="openTicket"
       />
-
       <BoardColumn
         title="Done"
         :tickets="doneTickets"
@@ -30,8 +30,8 @@
     </div>
   </div>
 
-  <div v-else class="loading-state">
-    Loading...
+  <div v-else>
+    Loading board...
   </div>
 
   <CreateTicketModal 
@@ -61,8 +61,8 @@ import axios from "axios";
 import { useScrumBoards } from '@/composables/scrumboard';
 import { useTickets } from '@/composables/ticket';
 import signalRConnection from "@/services/signalr";
-import type { ScrumBoard } from "@/types/scrumboard";
-import { TicketPriority, TicketStatus, type Ticket } from "@/types/ticket";
+import type { ScrumBoardDetail } from "@/types/scrumboard";
+import { TicketStatus, type CreateTicketRequest, type Ticket, type UpdateTicketRequest } from "@/types/ticket";
 import BoardColumn from "@/components/BoardColumn.vue";
 import CreateTicketModal from "@/components/CreateTicketModal.vue";
 import TicketDetailsModal from "@/components/TicketDetailsModal.vue";
@@ -73,15 +73,15 @@ const { getBoard } = useScrumBoards();
 const { getScrumboardTickets, createTicket, updateTicket, deleteTicket, assignSelfToTicket, updateStatus } = useTickets();
 const slug = route.params.slug as string;
 const boardId = Number(slug.split("-").pop());
-const board = ref<ScrumBoard | null>(null);
+const board = ref<ScrumBoardDetail | null>(null);
 const tickets = ref<Ticket[]>([]);
 const todoTickets = computed(() => tickets.value.filter(t => t.status === TicketStatus.Todo));
 const inProgressTickets = computed(() => tickets.value.filter(t => t.status === TicketStatus.InProgress));
 const doneTickets = computed(() => tickets.value.filter(t => t.status === TicketStatus.Done));
 const showCreateTicket = ref(false);
-const localErrors = ref<string[]>([]);
-const selectedTicket = ref<Ticket | null>(null);
 const showTicketModal = ref(false);
+const selectedTicket = ref<Ticket | null>(null);
+const localErrors = ref<string[]>([]);
 
 const openTicket = (ticket: Ticket) => {
   selectedTicket.value = ticket;
@@ -105,8 +105,8 @@ const updateTicketInList = (ticket: Ticket) => {
 };
 
 //Handle methods UI interactions / back-end interactions
-const handleCreateTicket = async (data: { title: string; description: string; }) => {
-  const result = await createTicket({title: data.title, description: data.description, scrumboardId: boardId, priority: TicketPriority.Medium});
+const handleCreateTicket = async (data: Omit<CreateTicketRequest,"scrumboardId">) => {
+  const result = await createTicket({...data, scrumboardId: boardId});
   
   if (!result.success) {
     localErrors.value = result.errors;
@@ -117,10 +117,10 @@ const handleCreateTicket = async (data: { title: string; description: string; })
   showCreateTicket.value = false;
 };
 
-const handleUpdateTicket = async (data: { title: string; description: string}) => {
+const handleUpdateTicket = async (data: UpdateTicketRequest) => {
   if (!selectedTicket.value) return;
 
-  const result = await updateTicket(selectedTicket.value.id, { title: data.title, description: data.description, priority: selectedTicket.value.priority });
+  const result = await updateTicket(selectedTicket.value.id, data);
   if (!result.success) {
     localErrors.value = result.errors;
     return;
@@ -141,7 +141,6 @@ const handleDeleteTicket = async () => {
   closeTicketModal();
 };
 
-//Handle methods SignalR real-time updates
 const handleAssignSelfToTicket = async () => {
   if (!selectedTicket.value) return;
 
@@ -155,13 +154,14 @@ const handleAssignSelfToTicket = async () => {
 const handleStatusChange = async (status: TicketStatus) => {
   if (!selectedTicket.value) return;
 
-  const result = await updateStatus(selectedTicket.value.id, { status });
+  const result = await updateStatus(selectedTicket.value.id, status);
   if (!result.success) {
     localErrors.value = result.errors;
     return;
   }
 };
 
+//Handle methods SignalR real-time updates
 const handleTicketCreated = (createdTicket: Ticket) => {
   const exists = tickets.value.some(t => t.id === createdTicket.id);
   if (!exists) tickets.value.push(createdTicket);
@@ -194,12 +194,13 @@ const handleTicketStatusChanged = (updatedTicket: Ticket) => {
   }
 };
 
+//SignalR events
 const signalREvents = [
-  ["TicketAssigned", handleTicketAssigned],
-  ["TicketStatusChanged", handleTicketStatusChanged],
   ["TicketCreated", handleTicketCreated],
   ["TicketUpdated", handleTicketUpdated],
-  ["TicketDeleted", handleTicketDeleted]
+  ["TicketDeleted", handleTicketDeleted],
+  ["TicketAssigned", handleTicketAssigned],
+  ["TicketStatusChanged", handleTicketStatusChanged]
 ] as const;
 
 const registerSignalREvents = () => {
@@ -229,8 +230,6 @@ const loadBoard = async () => {
   board.value = boardResponse.data;
   tickets.value = ticketResponse.data;
 };
-
-
 
 onMounted(async () => {
     if (isNaN(boardId)) {
@@ -300,10 +299,6 @@ onUnmounted(async () => {
     gap: 1.5rem;
 
     overflow-x: auto;
-}
-
-.loading-state {
-    padding: 3rem;
 }
 
 /* Modal overlay */

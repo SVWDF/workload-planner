@@ -2,14 +2,19 @@
     <div v-if="open" class="modal-overlay">
     <div class="ticket-modal">
       <h2>Create Ticket</h2>
-      <input v-model="title" placeholder="Title"/>
-      <textarea v-model="description" placeholder="Description"/>
+      <input v-model="form.title" placeholder="Title"/>
+      <textarea v-model="form.description" placeholder="Description"/>
+      <select v-model="form.priority">
+        <option :value="TicketPriority.Low">Low</option>
+        <option :value="TicketPriority.Medium">Medium</option>
+        <option :value="TicketPriority.High">High</option>
+      </select>
       <div v-if="errors.length" class="error-box">
         <p v-for="(e, i) in errors" :key="i">{{ e }}</p>
       </div>
 
       <div class="modal-actions">
-        <button @click="reset">Cancel</button>
+        <button @click="emit('close')">Cancel</button>
         <button @click="handleCreateTicket">Create</button>
       </div>
     </div>
@@ -17,7 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { TicketPriority, type CreateTicketRequest } from "@/types/ticket";
+import { reactive, watch } from "vue";
 
 const props = defineProps<{
     open: boolean;
@@ -26,25 +32,26 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: "close"): void;
-    (e: "create", data: {
-        title: string;
-        description: string;
-    }): void;
+    (e: "create", data: Omit<CreateTicketRequest,"scrumboardId">): void;
 }>();
 
-const title = ref("");
-const description = ref("");
+const form = reactive<Omit<CreateTicketRequest,"scrumboardId">>({
+    title: "",
+    description: "",
+    priority: TicketPriority.Medium
+});
 
 const handleCreateTicket = () => {
-    emit("create", { title: title.value, description: description.value });
-
+    emit("create", { ...form });
 };
 
-const reset = () => {
-    title.value = "";
-    description.value = "";
-    emit("close");
-};
+watch(() => props.open, isOpen => {
+    if (!isOpen) {
+        form.title = "";
+        form.description = "";
+        form.priority = TicketPriority.Medium;
+    }
+});
 </script>
 
 <style scoped>

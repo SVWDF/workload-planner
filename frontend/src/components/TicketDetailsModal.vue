@@ -2,10 +2,15 @@
     <div v-if="open && ticket" class="modal-overlay">
         <div class="ticket-modal">
             <h2>Ticket Details</h2>
-            <input v-model="localTitle" :disabled="!isManager" />
-            <textarea v-model="localDescription" :disabled="!isManager"></textarea>
+            <input v-model="form.title" :disabled="!isManager" />
+            <textarea v-model="form.description" :disabled="!isManager"></textarea>
+            <select v-model="form.priority" :disabled="!isManager">
+                <option :value="TicketPriority.Low">Low</option>
+                <option :value="TicketPriority.Medium">Medium</option>
+                <option :value="TicketPriority.High">High</option>
+            </select>
             <p>Assigned: {{ ticket.assignedUser ?? "Nobody" }}</p>
-            <button @click="emit('assign')">Assign to me</button>
+            <button @click="emit('assign')" :disabled="!!ticket.assignedUser">Assign to me</button>
             <select v-model="localStatus" @change="handleStatusChange">
                 <option :value="TicketStatus.Todo">To Do</option>
                 <option :value="TicketStatus.InProgress">In Progress</option>
@@ -26,8 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { TicketStatus, type Ticket } from "@/types/ticket";
+import { reactive, ref, watch } from "vue";
+import { TicketPriority, TicketStatus, type Ticket, type UpdateTicketRequest } from "@/types/ticket";
 
 const props = defineProps<{
     open: boolean;
@@ -38,32 +43,42 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: "close"): void;
-    (e: "save", data: {
-        title: string;
-        description: string;
-    }): void;
+    (e: "save", data: UpdateTicketRequest): void;
     (e: "delete"): void;
     (e: "assign"): void;
     (e: "status-change", status: TicketStatus): void;
 }>();
 
-const localTitle = ref("");
-const localDescription = ref("");
+const form = reactive<UpdateTicketRequest>({
+    title: "",
+    description: "",
+    priority: TicketPriority.Medium
+});
 const localStatus = ref<TicketStatus>(TicketStatus.Todo);
 
 watch(() => props.ticket,
     ticket => {
         if (!ticket) return;
-
-        localTitle.value = ticket.title;
-        localDescription.value = ticket.description;
+        form.title = ticket.title;
+        form.description = ticket.description;
+        form.priority = ticket.priority;
         localStatus.value = ticket.status;
     },
     { immediate: true }
 );
 
+watch(() => props.open, isOpen => {
+    if (!isOpen) {
+      form.title = "";
+      form.description = "";
+      form.priority = TicketPriority.Medium;
+      localStatus.value = TicketStatus.Todo;
+    }
+  }
+);
+
 const handleSave = () => {
-    emit("save", { title: localTitle.value, description: localDescription.value });
+    emit("save", { ...form });
 };
 
 const handleStatusChange = () => {

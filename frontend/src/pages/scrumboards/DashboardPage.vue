@@ -1,5 +1,8 @@
 <template>
-  <div class="dashboard">
+  <div v-if="isLoading">
+    Loading Workspaces...
+  </div>
+  <div v-else class="dashboard">
     <h2 class="dashboard-title">Your Workspaces</h2>
     <button class="create-board-button" @click="goToCreateBoard">
         Create Board
@@ -21,17 +24,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useScrumBoards } from '@/composables/scrumboard';
 import { type ScrumBoard } from '@/types/scrumboard';
 import { createSlug } from '@/helpers/slug';
 import BoardCard from '@/components/BoardCard.vue';
-import signalRConnection from '@/services/signalr';
 
 const router = useRouter();
 const { getBoards } = useScrumBoards();
 const boards = ref<ScrumBoard[]>([]);
+const isLoading = ref(true);
 const localErrors = ref<string[]>([]);
 
 const loadBoards = async () => {
@@ -42,6 +45,9 @@ const loadBoards = async () => {
   }
   catch (err: unknown) {
     localErrors.value = (err as { customErrors?: string[]}).customErrors ?? ["Failed to load boards"];
+  }
+  finally {
+    isLoading.value = false;
   }
 } 
 
@@ -54,19 +60,8 @@ const openBoard = (board: ScrumBoard) => {
   router.push({ name: "Board", params: { slug: `${slug}-${board.id}`}});
 };
 
-const handleScrumboardCreated = (newScrumboard: ScrumBoard) => {
-  const exists = boards.value.some(sb => sb.id === newScrumboard.id);
-  if (!exists) boards.value.push(newScrumboard);
-};
-
 onMounted(async () => {
-  if (signalRConnection.state === "Disconnected") await signalRConnection.start();
-  signalRConnection.on("ScrumboardCreated", handleScrumboardCreated);
   await loadBoards();
-});
-
-onUnmounted(() => {
-  signalRConnection.off("ScrumboardCreated", handleScrumboardCreated);
 });
 </script>
 
@@ -98,7 +93,7 @@ div.scrumboards-grid {
 
 }
 
-error-box {
+.error-box {
   background: rgba(255, 77, 77, 0.1);
   color: #ff6b6b;
   border: 1px solid rgba(255, 107, 107, 0.3);

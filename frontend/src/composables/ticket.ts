@@ -1,5 +1,5 @@
 import http from "@/api/http";
-import type { CreateTicketRequest, UpdateTicketRequest, UpdateTicketStatusRequest } from "@/types/ticket";
+import type { CreateTicketRequest, TicketStatus, UpdateTicketRequest } from "@/types/ticket";
 
 const ticketSuccess = (data: unknown = null) => ({
     success: true, errors: [], data
@@ -53,9 +53,9 @@ const assignSelfToTicket = async (id: number) => {
     }
 };
 
-const updateStatus = async (id: number, data: UpdateTicketStatusRequest) => {
+const updateStatus = async (id: number, status: TicketStatus) => {
     try {
-        const response = await http.patch(`/tickets/${id}/status`, data);
+        const response = await http.patch(`/tickets/${id}/status`, { status });
         return ticketSuccess(response.data)
     }
     catch (err: unknown) {

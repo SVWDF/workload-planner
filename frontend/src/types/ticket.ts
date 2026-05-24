@@ -37,7 +37,3 @@ export interface UpdateTicketRequest {
     description: string;
     priority: TicketPriority;
 }
-
-export interface UpdateTicketStatusRequest {
-    status: TicketStatus;
-}

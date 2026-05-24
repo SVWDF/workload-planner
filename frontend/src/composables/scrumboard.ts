@@ -1,5 +1,9 @@
+import { ref } from "vue";
 import http from "../api/http";
-import { type CreateScrumBoardRequest, type ScrumBoardCreatedResponse } from '../types/scrumboard';
+import { type CreateScrumBoardRequest, type ScrumBoard, type ScrumBoardCreatedResponse } from '../types/scrumboard';
+
+const cachedBoards = ref<ScrumBoard[]>([]);
+let loaded = false;
 
 const scrumboardSuccess = (data: ScrumBoardCreatedResponse) => ({
     success: true, errors: [], data
@@ -10,7 +14,12 @@ const scrumboardFail = (err: unknown, fallback: string) => ({
 });
 
 const getBoards = async () => {
-    return await http.get("/scrumboards");
+    if (loaded) return { data: cachedBoards.value };
+
+    const response = await http.get("/scrumboards");
+    cachedBoards.value = response.data;
+    loaded = true;
+    return response;
 };
 
 const getBoard = async(id: number) => {
@@ -31,6 +40,7 @@ export function useScrumBoards() {
     return {
         getBoards,
         getBoard,
-        createScrumBoard
+        createScrumBoard,
+        cachedBoards
     }
 }

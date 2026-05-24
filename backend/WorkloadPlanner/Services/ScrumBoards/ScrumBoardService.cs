@@ -130,7 +130,6 @@ namespace WorkloadPlanner.Services.ScrumBoards
             };
 
             await Task.WhenAll(members
-                .Where(m => m.UserId != userId)
                 .Select(m => _hubContext
                     .Clients
                     .User(m.UserId)
