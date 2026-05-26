@@ -14,6 +14,7 @@ dist-ssr/
 
 # General
 .env
+.env.*
 
 # Logs
 logs
