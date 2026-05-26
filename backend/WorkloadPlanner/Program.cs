@@ -119,7 +119,10 @@ app.UseAuthorization();
 app.UseRateLimiter();
 app.MapControllers();
 
-app.MapHub<ScrumboardHub>("/scrumboardHub");
+app.MapHub<ScrumboardHub>("/scrumboardHub", options =>
+{
+    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+});
 
 using (var scope =
     app.Services.CreateScope())
