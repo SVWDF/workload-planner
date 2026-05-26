@@ -1,5 +1,4 @@
 using System.Threading.RateLimiting;
-using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -67,9 +66,9 @@ builder.Services.AddRateLimiter(options =>
 });
 
 
-
 //Configure CORS
 var frontendUrl = builder.Configuration["Frontend:Url"];
+Console.WriteLine($"Frontend URL: {frontendUrl}");
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
