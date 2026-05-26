@@ -6,10 +6,9 @@ const signalRConnection = new signalR
         `${import.meta.env.VITE_API_URL}/scrumboardHub`,
         {
              withCredentials: true, 
-             transport: signalR.HttpTransportType.WebSockets,
-             skipNegotiation: true
         })
     .withAutomaticReconnect()
+
     .build();
 
 export default signalRConnection;
