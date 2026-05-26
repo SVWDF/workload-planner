@@ -239,8 +239,6 @@ onMounted(async () => {
 
     try {
       await loadBoard();
-
-      if (signalRConnection.state === "Disconnected") await signalRConnection.start();
       registerSignalREvents();
       await signalRConnection.invoke("JoinScrumboard", boardId);
     }

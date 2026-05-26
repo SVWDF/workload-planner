@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import signalRConnection from "@/services/signalr";
+import { stopSignalR } from "@/services/signalr";
 import { useAuth } from "../composables/auth";
 import { useRouter } from "vue-router";
 import { LogOut } from "lucide-vue-next";
@@ -21,7 +21,7 @@ const router = useRouter();
 
 const handleLogout = async () => {
   try {
-    await signalRConnection.stop();
+    await stopSignalR();
     await logout();
   }
   finally {

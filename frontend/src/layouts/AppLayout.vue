@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
 import Navbar from '@/components/Navbar.vue';
-import signalRConnection from '@/services/signalr';
+import signalRConnection, { startSignalR } from '@/services/signalr';
 import { useScrumBoards } from '@/composables/scrumboard';
 import type { ScrumBoard } from '@/types/scrumboard';
 
@@ -19,7 +19,7 @@ const handleScrumboardCreated = (newScrumboard: ScrumBoard) => {
 };
 
 onMounted(async () => {
-    if (signalRConnection.state === "Disconnected") await signalRConnection.start();
+    await startSignalR();
     signalRConnection.on("ScrumboardCreated", handleScrumboardCreated);
 });
 

@@ -59,7 +59,10 @@
       <div v-if="localErrors.length" class="error-box">
         <p v-for="(e, i) in localErrors" :key="i">{{ e }}</p>
       </div>
-      <button type="submit" class="submit-button">Create Board</button>
+      <div class="form-actions">
+        <button type="submit">Create Board</button>
+        <button type="button" @click="cancelBoardCreation">Cancel</button>
+      </div>
     </form>
   </div>
 </template>
@@ -159,6 +162,16 @@ const createBoard = async () => {
   
   const slug = createSlug(response.data.name);
   router.push({ name: "Board", params: { slug: `${slug}-${response.data.id}`}});
+};
+
+const cancelBoardCreation = () => {
+  form.name = "";
+  form.memberIds = [];
+  selectedUsers.value = [];
+  search.value = "";
+  users.value = [];
+  localErrors.value = [];
+  router.push({ name: "Dashboard"});
 };
 
 onMounted(loadColors);
@@ -306,7 +319,12 @@ onMounted(loadColors);
   color: #ef4444;
 }
 
-.submit-button {
+.form-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-actions button {
   align-self: flex-start;
   padding: 0.9rem 1.5rem;
 }

@@ -10,4 +10,14 @@ const signalRConnection = new signalR
     .withAutomaticReconnect()
     .build();
 
+export const startSignalR = async () => {
+    if (signalRConnection.state === signalR.HubConnectionState.Disconnected) 
+        await signalRConnection.start();
+};
+
+export const stopSignalR = async () => {
+    if (signalRConnection.state === signalR.HubConnectionState.Connected)
+        await signalRConnection.stop();
+};
+
 export default signalRConnection;

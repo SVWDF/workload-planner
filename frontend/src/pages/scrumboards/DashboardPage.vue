@@ -2,6 +2,10 @@
   <div v-if="isLoading">
     <p>Loading Workspaces...</p>
   </div>
+  <div v-else-if="boards.length === 0">
+    <h3>No workspaces yet</h3>
+    <p>Create your first one to get started.</p>
+  </div>
   <div v-else class="dashboard">
     <div class="dashboard-header">
       <h3>Your Workspaces</h3>
