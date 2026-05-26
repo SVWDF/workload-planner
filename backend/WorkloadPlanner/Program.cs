@@ -122,4 +122,16 @@ app.MapControllers();
 
 app.MapHub<ScrumboardHub>("/scrumboardHub");
 
+using (var scope =
+    app.Services.CreateScope())
+{
+    var db =
+        scope.ServiceProvider
+            .GetRequiredService<
+                WorkloadPlannerDbContext
+            >();
+
+    await db.Database.MigrateAsync();
+}
+
 app.Run();
