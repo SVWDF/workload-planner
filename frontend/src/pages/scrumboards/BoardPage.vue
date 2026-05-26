@@ -8,7 +8,7 @@
           {{ tickets.length }} {{ board.tickets === 1 ? "ticket" : "tickets" }}
         </p>
       </div>
-      <button v-if="board.isManager" @click="showCreateTicket = true" class="create-ticket-btn">+ New Ticket</button>
+      <button v-if="board.isManager" @click="showCreateTicket = true">+ New Ticket</button>
     </div>
 
     <div class="board-columns">
@@ -31,7 +31,7 @@
   </div>
 
   <div v-else>
-    Loading board...
+    <p>Loading board...</p>
   </div>
 
   <CreateTicketModal 
@@ -264,20 +264,20 @@ onUnmounted(async () => {
 
 <style scoped>
 .board-page {
-    padding: 2rem;
     height: 100%;
 }
 
 .board-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-
+    flex-direction: column;
     margin-bottom: 2rem;
 }
 
+.board-header > div {
+  margin-bottom: 0.75rem;
+}
+
 .board-header h1 {
-    font-size: 2rem;
     margin-bottom: 0.3rem;
 }
 
@@ -285,23 +285,16 @@ onUnmounted(async () => {
     color: #a1a1aa;
 }
 
-.create-ticket-btn {
-    padding: 0.8rem 1.2rem;
-    border: none;
-    border-radius: 12px;
-
-    cursor: pointer;
+.board-header button {
+  max-width: 160px;
 }
 
-/* Columns */
 .board-columns {
-    display: flex;
+    display: grid;
     gap: 1.5rem;
-
     overflow-x: auto;
 }
 
-/* Modal overlay */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -315,7 +308,7 @@ onUnmounted(async () => {
     width: 500px;
     max-width: 90%;
     border-radius: 20px;
-    background: #1e1e1e;
+    background: var(--bg-secondary);
     padding: 2rem;
 }
 
@@ -330,5 +323,23 @@ onUnmounted(async () => {
     justify-content: flex-end;
     gap: 1rem;
     margin-top: 1.5rem;
+}
+
+@media (min-width: 48em) {
+  .board-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .board-columns {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 75em) {
+  .board-columns {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 </style>

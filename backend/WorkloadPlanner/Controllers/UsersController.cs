@@ -1,12 +1,14 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WorkloadPlanner.DTOs.Users;
 using WorkloadPlanner.Services.Users;
 
 namespace WorkloadPlanner.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting("ApiPolicy")]
     [ApiController]
     [Authorize]
     public class UsersController : ControllerBase

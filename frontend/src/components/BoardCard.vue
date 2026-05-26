@@ -2,7 +2,7 @@
     <div class="board-card">
         <div class="board-color" :style="{ backgroundColor: board.color }"></div>
         <div class="board-content">
-            <h3>{{ board.name }}</h3>
+            <h4>{{ board.name }}</h4>
             <div class="board-stats">
                 <span>{{ board.members }} {{ board.members === 1 ? "member" : "members" }}</span>
                 <span>{{ board.tickets }} {{ board.tickets === 1 ? "ticket" : "tickets" }}</span>
@@ -21,27 +21,26 @@ defineProps<{
 
 <style scoped>
 .board-card {
-    border-radius: 12px;
+    border-radius: var(--radius-card);
     cursor: pointer;
-    background-color: #1e1e1e;
+    background-color: var(--bg-secondary);
     transition:
         transform 0.2s ease,
         box-shadow 0.2s ease,
         background-color 0.2s ease;
-    min-height: 200px;
 }
 
 .board-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    background-color: #262626;
+    box-shadow: var(--shadow-hover);
+    background-color: var(--bg-primary);
 }
 
 .board-color {
     width: 100%;
     height: 60px;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+    border-top-left-radius: var(--radius-card);
+    border-top-right-radius: var(--radius-card);
 }
 
 .board-content {
@@ -50,10 +49,9 @@ defineProps<{
     grid-template-rows: auto;
 }
 
-.board-content > h3 {
-    font-size: 1.4rem;
+.board-content > h4 {
     font-weight: 500;
-    margin-bottom: 30px;
+    margin: 8px 0 24px 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

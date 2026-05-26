@@ -1,12 +1,12 @@
 <template>
   <div v-if="isLoading">
-    Loading Workspaces...
+    <p>Loading Workspaces...</p>
   </div>
   <div v-else class="dashboard">
-    <h2 class="dashboard-title">Your Workspaces</h2>
-    <button class="create-board-button" @click="goToCreateBoard">
-        Create Board
-    </button>
+    <div class="dashboard-header">
+      <h3>Your Workspaces</h3>
+      <button @click="goToCreateBoard">Create Board</button>
+    </div>
     <div class="scrumboards-grid">
       <BoardCard
         v-for="board in boards"
@@ -15,9 +15,7 @@
         @click="openBoard(board)"
       />
       <div v-if="localErrors.length" class="error-box">
-        <p v-for="(e, i) in localErrors" :key="i">
-          {{ e }}
-        </p>
+        <p v-for="(e, i) in localErrors" :key="i">{{ e }}</p>
       </div>
     </div>
   </div>
@@ -66,59 +64,42 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-div.dashboard > h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-right: 24px;
-}
-
-div.dashboard > button.create-board-button {
-  border: none;
-  background-color: #4f8cff;
-  transition: background 0.25s ease, transform 0.1s ease;
-}
-
-div.dashboard > button.create-board-button:hover {
-  background-color: #3d79e6;
+div.dashboard-header h3 {
+  margin: 0 0 12px 0;
 }
 
 div.scrumboards-grid {
   margin-top: 16px;
-  border: 2px solid #404040;
-  padding: 0.75rem;
   border-radius: 12px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 16px;
 
 }
 
-.error-box {
-  background: rgba(255, 77, 77, 0.1);
-  color: #ff6b6b;
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 8px;
-  padding-inline: 0.5rem;
-  margin-top: 1rem;
-  text-align: left;
-  font-size: 0.9rem;
-  width: 100%;
-  max-width: 200px;
-  box-sizing: border-box;
+@media (min-width: 36em) {
+  div.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  div.dashboard-header h3 {
+    margin: 0
+  }
+
+  div.scrumboards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.error-box > p {
-  margin-top: 6px;
-  margin-bottom: 6px;
-}
-
-@media (min-width: 992px) {
+@media (min-width: 48em) {
   div.scrumboards-grid {
     grid-template-columns: repeat(3, 1fr);
   }
- }
+}
 
-@media (min-width: 1200px) {
+@media (min-width: 75em) {
   div.scrumboards-grid {
     grid-template-columns: repeat(4, 1fr);
   }

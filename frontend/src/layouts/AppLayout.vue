@@ -32,6 +32,12 @@ onUnmounted(() => {
 main {
     max-width: 1200px;
     margin: 50px auto 0;
-    padding: 0.5rem 2rem;
+    padding: 0.5rem 1.25rem;
+}
+
+@media (min-width: 62em) {
+    main {
+        padding: 0.5rem 2rem;
+    }
 }
 </style>

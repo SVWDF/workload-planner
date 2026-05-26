@@ -3,66 +3,130 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /*Backgrounds*/
+  --bg-primary: #242424;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2d2d2d;
+
+  /*Borders*/
+  --border-primary: #404040;
+  --border-secondary: #444;
+  
+  /*Text*/
+  --text-primary: #f0f0f0;
+  --text-secondary: #aaaaaa;
+
+  /*Accent*/
+  --accent-primary: #4f8cff;
+  --accent-primary-hover:#3d79e6;
+
+  /*Error*/
+  --error-bg: rgba(255, 77, 77, .1);
+  --error-text: #ff6b6b;
+  --error-border: rgba(255, 107, 107, .3);
+
+  /*Shadow*/
+  --shadow-card: 0 0 25px rgba(0, 0, 0, .4);
+  --shadow-hover: 0 8px 24px rgba(0, 0, 0, .2);
+
+  /*Radius*/
+  --radius-card: 16px;
+  --radius-input: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--accent-primary);
   text-decoration: inherit;
 }
+
 a:hover {
-  color: #535bf2;
+  text-decoration: underline;
 }
 
 body {
   margin: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 2em;
+}
+
+h2 {
+  font-size: 1.75rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+  border-radius: var(--radius-input);
+  border: none;
+  padding: 0.75em 1.2em;
+  font-size: 1rem;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  color: white;
+  background-color: var(--accent-primary);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: background 0.25s ease, transform 0.1s ease;
 }
 button:hover {
-  border-color: #646cff;
+  background-color: var(--accent-primary-hover);
 }
+
+button:active {
+  transform: scale(0.98);
+}
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-.card {
-  padding: 2em;
+input,
+textarea {
+  background: #1f1f1f;
+  color: #f0f0f0;
+  border: 1px solid #444;
+  border-radius: var(--radius-input);
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  min-width: 0;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+select {
+  background: #1f1f1f;
+  color: #f0f0f0;
+  border: 1px solid #444;
+  border-radius: var(--radius-input);
+  padding: 0.75rem;
+  font-size: 0.95rem;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #4f8cff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(79, 140, 255, 0.5);
 }

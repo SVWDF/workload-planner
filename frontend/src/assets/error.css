@@ -1,0 +1,18 @@
+.error-box {
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-input);
+  padding: 0.25rem 0.75rem;
+  margin-top: 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.error-box > p {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}

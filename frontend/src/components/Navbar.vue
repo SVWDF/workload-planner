@@ -2,7 +2,10 @@
     <header>
         <RouterLink to="/dashboard" class="logo">Workload Planner X</RouterLink>
         <nav>
-            <button @click="handleLogout">Logout</button>
+            <button @click="handleLogout">
+              <span>Logout</span>
+              <LogOut :size="26" class="logout-icon" />
+            </button>
         </nav>
     </header>
 </template>
@@ -11,6 +14,7 @@
 import signalRConnection from "@/services/signalr";
 import { useAuth } from "../composables/auth";
 import { useRouter } from "vue-router";
+import { LogOut } from "lucide-vue-next";
 
 const { logout } = useAuth();
 const router = useRouter();
@@ -21,7 +25,7 @@ const handleLogout = async () => {
     await logout();
   }
   finally {
-    router.push("/login");
+    router.push({ name: "Login" });
   }
 };
 </script>
@@ -32,32 +36,43 @@ header {
     align-items: center;
     justify-content: space-between;
     padding: 1.1rem 1.25rem;
-    background: #2d2d2d;
-    box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+    background: var(--bg-tertiary);
+    box-shadow: var(--shadow-card);
 }
 
 .logo {
-    font-size: 1.75rem;
+    font-size: clamp(1.5rem, 3.5vw, 1.75rem);
     font-weight: 700;
-    color: white;
+    color: var(--text-primary);
+}
+
+.logo:hover {
+  text-decoration: none;
 }
 
 button {
-  background-color: #4f8cff;
-  color: #fff;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.6rem 1.4rem;
-  font-size: 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.25s ease, transform 0.1s ease;
 }
 
-button:hover {
-  background-color: #3d79e6;
+.logout-icon {
+  display: none;
 }
 
-button:active {
-  transform: scale(0.98);
+@media (max-width: 36em) {
+  button {
+    padding: 0.5rem 0.75rem;
+  }
+
+  button > span {
+    display: none;
+  }
+
+  .logout-icon {
+    display: block;
+  }
 }
 </style>

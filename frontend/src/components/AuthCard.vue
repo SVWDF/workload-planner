@@ -1,12 +1,12 @@
 <template>
     <div class="auth-card-container">
         <div class="auth-card">
-            <h2 class="title">{{ title }}</h2>
-            <p class="subtitle">{{ subtitle }}</p>
-            <slot></slot>
-            <p class="auth-footer">
+            <h2>{{ title }}</h2>
+            <p>{{ subtitle }}</p>
+            <slot />
+            <footer>
                 <slot name="footer"></slot>
-            </p>
+            </footer>
         </div>
     </div>
 </template>
@@ -20,40 +20,34 @@ defineProps<{
 
 <style scoped>
 .auth-card-container {
-    min-height: 100vh;
+    min-height: 100dvh;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 0 2rem;
     display: grid;
     align-items: center;
 }
 
-.login-card {
-    max-width: 400px;
-}
-
-.register-card {
-    max-width: 600px;
-}
-
 .auth-card {
-    background: #2d2d2d;
+    background: var(--bg-tertiary);
     padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
-    color: #f0f0f0;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
     text-align: center;
 }
 
-.title {
-    font-size: 1.8rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #ffffff;
+p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
 }
 
-.subtitle {
-    font-size: 0.95rem;
-    color: #aaaaaa;
-    margin-bottom: 1.5rem;
+footer {
+    margin: 24px 0 8px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    text-align: center;
 }
 </style>

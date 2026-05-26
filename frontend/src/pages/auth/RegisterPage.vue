@@ -4,29 +4,28 @@
   subtitle="Register to start managing your workload"
   class="register-card">
     <form @submit.prevent="handleRegister" class="register-form">
-      <input
-        v-model="form.firstName"
-        type="text"
-        placeholder="First name"
-        required
-        autocomplete="given-name"
-        class="auth-input"
-      />
-      <input 
-        v-model="form.lastName"
-        type="text"
-        placeholder="Last name"
-        required
-        autocomplete="family-name"
-        class="auth-input"
-      />
+      <div class="name-row">
+        <input
+          v-model="form.firstName"
+          type="text"
+          placeholder="First name"
+          required
+          autocomplete="given-name"
+        />
+        <input 
+          v-model="form.lastName"
+          type="text"
+          placeholder="Last name"
+          required
+          autocomplete="family-name"
+        />
+      </div>
       <input 
         v-model="form.username"
         type="text"
         placeholder="Username"
         required
         autocomplete="username"
-        class="auth-input"
       />
       <input
         v-model="form.email"
@@ -34,7 +33,6 @@
         placeholder="Email"
         required
         autocomplete="email"
-        class="auth-input"
       />
       <input
         v-model="form.password"
@@ -42,19 +40,16 @@
         placeholder="Password"
         required
         autocomplete="new-password"
-        class="auth-input"
       />
-      <button type="submit" class="auth-button" :disabled="loading">Register</button>
+      <button type="submit" :disabled="loading">Register</button>
     </form>
     <div v-if="localErrors.length" class="error-box">
       <p v-for="(e, i) in localErrors" :key="i">{{ e }}</p>
     </div>
 
     <template #footer>
-      <div class="register-footer">
-        <span>Already have an account?</span>
-        <router-link to="/login" class="link">Login</router-link>
-      </div>
+      <span>Already have an account?</span>
+      <router-link to="/login" class="link">Login</router-link>
     </template>
   </AuthCard>
 </template>
@@ -103,4 +98,25 @@ const handleRegister = async () => {
 };
 </script>
 
-<style src="@/assets/auth.css"></style>
+<style scoped>
+.register-card {
+    max-width: 640px;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.name-row {
+  display: flex;
+  gap: 1rem;
+}
+
+@media (max-width: 36em) {
+  .name-row {
+    flex-direction: column;
+  }
+}
+</style>

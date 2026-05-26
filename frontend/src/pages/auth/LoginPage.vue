@@ -10,7 +10,6 @@
           placeholder="Email"
           required
           autocomplete="email"
-          class="auth-input"
         />
         <input
           v-model="form.password"
@@ -18,19 +17,16 @@
           placeholder="Password"
           required
           autocomplete="current-password"
-          class="auth-input"
         />
-        <button type="submit" class="auth-button" :disabled="loading">{{ loading ? "Logging in..." : "Login" }}</button>
+        <button type="submit" :disabled="loading">{{ loading ? "Logging in..." : "Login" }}</button>
       </form>
       <div v-if="localErrors.length" class="error-box">
         <p v-for="(e, i) in localErrors" :key="i">{{ e }}</p>
       </div>
 
       <template #footer>
-        <div class="login-footer">
-          <span>Don't have an account?</span>
-          <router-link to="/register" class="link">Register</router-link>
-        </div>
+        <span>Don't have an account?</span>
+        <router-link to="/register" class="link">Register</router-link>
       </template>
   </AuthCard>
 </template>
@@ -72,4 +68,14 @@ const handleLogin = async () => {
 };
 </script>
 
-<style src="@/assets/auth.css"></style>
+<style scoped>
+.login-card {
+  max-width: 460px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+</style>

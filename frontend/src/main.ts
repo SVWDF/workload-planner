@@ -1,4 +1,5 @@
 import './style.css'
+import '@/assets/error.css'
 
 import { createApp } from 'vue'
 

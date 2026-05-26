@@ -1,5 +1,7 @@
+using System.Threading.RateLimiting;
 using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using WorkloadPlanner.Data;
 using WorkloadPlanner.Hubs;
@@ -46,6 +48,28 @@ builder.Services.ConfigureApplicationCookie(options =>
         return Task.CompletedTask;
     };
 });
+
+//Configure request limiter
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("ApiPolicy",
+    limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 50;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
+
+    options.AddFixedWindowLimiter("AuthPolicy",
+    limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 5;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+    });
+});
+
+
 
 //Configure CORS
 var frontendUrl = builder.Configuration["Frontend:Url"];
@@ -96,7 +120,7 @@ app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseRateLimiter();
 app.MapControllers();
 
 app.MapHub<ScrumboardHub>("/scrumboardHub");

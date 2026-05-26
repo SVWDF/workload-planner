@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WorkloadPlanner.DTOs.Auth;
 using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Services.Auth;
@@ -7,6 +8,7 @@ using WorkloadPlanner.Services.Auth;
 namespace WorkloadPlanner.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting("AuthPolicy")]
     [ApiController]
     public class AuthController : ControllerBase
     {

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WorkloadPlanner.DTOs.Tickets;
 using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Exceptions.Ticket;
@@ -10,6 +11,7 @@ using WorkloadPlanner.Services.Tickets;
 namespace WorkloadPlanner.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting("ApiPolicy")]
     [ApiController]
     [Authorize]
     public class TicketsController : ControllerBase

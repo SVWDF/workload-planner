@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WorkloadPlanner.DTOs.ScrumBoards;
 using WorkloadPlanner.Exceptions.Auth;
 using WorkloadPlanner.Exceptions.Scrumboard;
@@ -10,6 +11,7 @@ using WorkloadPlanner.Services.ScrumBoards;
 namespace WorkloadPlanner.Controllers
 {
     [Route("api/[controller]")]
+    [EnableRateLimiting("ApiPolicy")]
     [ApiController]
     [Authorize]
     public class ScrumBoardsController : ControllerBase

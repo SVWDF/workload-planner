@@ -2,21 +2,31 @@
     <div v-if="open" class="modal-overlay">
     <div class="ticket-modal">
       <h2>Create Ticket</h2>
-      <input v-model="form.title" placeholder="Title"/>
-      <textarea v-model="form.description" placeholder="Description"/>
-      <select v-model="form.priority">
-        <option :value="TicketPriority.Low">Low</option>
-        <option :value="TicketPriority.Medium">Medium</option>
-        <option :value="TicketPriority.High">High</option>
-      </select>
-      <div v-if="errors.length" class="error-box">
-        <p v-for="(e, i) in errors" :key="i">{{ e }}</p>
-      </div>
-
-      <div class="modal-actions">
-        <button @click="emit('close')">Cancel</button>
-        <button @click="handleCreateTicket">Create</button>
-      </div>
+      <form @submit.prevent="handleCreateTicket">
+          <div class="form-group">
+            <label for="ticket-create-title">Title</label>
+            <input id="ticket-create-title" v-model="form.title" placeholder="Title" required/>
+          </div>
+          <div class="form-group">
+            <label for="ticket-create-description">Description</label>
+            <textarea id="ticket-create-description" v-model="form.description" placeholder="Description"/>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select v-model="form.priority">
+                <option :value="TicketPriority.Low">Low</option>
+                <option :value="TicketPriority.Medium">Medium</option>
+                <option :value="TicketPriority.High">High</option>
+            </select>
+          </div>
+          <div v-if="errors.length" class="error-box">
+            <p v-for="(e, i) in errors" :key="i">{{ e }}</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="emit('close')">Cancel</button>
+            <button type="submit">Create</button>
+          </div>
+      </form>
     </div>
   </div>
 </template>
@@ -68,14 +78,37 @@ watch(() => props.open, isOpen => {
     width: 500px;
     max-width: 90%;
     border-radius: 20px;
-    background: #1e1e1e;
+    background: var(--bg-secondary);
     padding: 2rem;
 }
 
-.ticket-modal input,
-.ticket-modal textarea {
+h2 {
+    margin-bottom: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group:not(:last-child) {
+    margin-bottom: 12px;
+}
+
+input,
+textarea {
     width: 100%;
-    margin-top: 1rem;
+}
+
+textarea {
+    min-height: 100px;
+    max-width: 100%;
+}
+
+select {
+    width: fit-content;
+    min-width: 160px;
 }
 
 .modal-actions {
