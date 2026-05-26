@@ -8,7 +8,6 @@ const signalRConnection = new signalR
              withCredentials: true, 
         })
     .withAutomaticReconnect()
-
     .build();
 
 export default signalRConnection;
