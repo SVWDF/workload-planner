@@ -13,15 +13,12 @@ using WorkloadPlanner.Services.ScrumBoards;
 using WorkloadPlanner.Services.Tickets;
 using WorkloadPlanner.Services.Users;
 
-//Load .env file
-Env.Load();
-
 var builder = WebApplication.CreateBuilder(args);
 
 //Setup database connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Database connection string was not found");
 builder.Services.AddDbContext<WorkloadPlannerDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36))));
 
 //Configuration ASP.NET Core Identity 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
