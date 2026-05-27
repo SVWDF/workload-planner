@@ -288,7 +288,6 @@ onMounted(loadColors);
   background: #313131;
 }
 
-/* Selected Users */
 .selected-users {
   display: flex;
   flex-wrap: wrap;
